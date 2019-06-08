@@ -13,7 +13,7 @@ void frpfree(void * ptr){
 }
 
 void frpErrorCompileMessage(const frp_uint8 * msg,frp_size linecount,frp_size cursor,const char extra[]){
-    printf("Compile error at line %d\n",linecount);
+    printf("Compile error at line %d col %d\n",linecount+1,cursor+1);
     printf("%s\n",msg);
     while(cursor--)
         putchar(' ');
@@ -24,7 +24,7 @@ void frpErrorCompileMessage(const frp_uint8 * msg,frp_size linecount,frp_size cu
 
 }
 void frpWarringCompileMessage(const frp_uint8 * msg,frp_size linecount,frp_size cursor,const char extra[]){
-    printf("Warring at line %d\n",linecount);
+    printf("Warring at line %d col %d\n",linecount+1,cursor+1);
     printf("%s\n",msg);
     while(cursor--)
         putchar(' ');

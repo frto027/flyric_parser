@@ -4,6 +4,7 @@
 #ifndef NULL
 #define NULL 0
 #endif
+//you can change this file or redefine methods here for your own program
 
 //file format without BOM is adviced, but txt from windows notepad has a bad head.
 #define FRP_AUTO_CHECK_BOM 1

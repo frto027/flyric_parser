@@ -7,7 +7,8 @@
 
 #define PARSE_SEG_ARGS FRPFile * file,frp_size * cursor,FRPSeg * seg,frp_size maxlen
 
-void flyc_seg_parser(PARSE_SEG_ARGS);
+
+int flyc_seg_parser(PARSE_SEG_ARGS);
 void flyc_seg_init(FRPSeg * seg){
     seg->flyc.lines = NULL;
     seg->flyc.value_count = NULL;
@@ -15,7 +16,7 @@ void flyc_seg_init(FRPSeg * seg){
 
 static struct{
     const char *parser;
-    void (*fp)(PARSE_SEG_ARGS);
+    int (*fp)(PARSE_SEG_ARGS);
     void (*init)(FRPSeg* seg);
 } frp_seg_parserinfo[] = {
 {"flyc",flyc_seg_parser,flyc_seg_init},
@@ -151,8 +152,15 @@ FRPSeg * frp_getseg(FRPFile * file,const frp_uint8 * name){
     }
     return NULL;
 }
+//only find segment
+FRPSeg * frp_findseg_not_create(FRPFile * file,frp_str seg_name){
+    for(frp_size i=0;i<file->segcount;i++)
+        if(frpstr_cmp(file->textpool,seg_name,file->segs[i].segname) == 0)
+            return file->segs + i;
+    return NULL;
+}
 //this will make new segment if not found
-FRPSeg * frp_findseg(FRPFile * file,frp_str seg_name,void (**fp)(PARSE_SEG_ARGS)){
+FRPSeg * frp_findseg(FRPFile * file,frp_str seg_name,int (**fp)(PARSE_SEG_ARGS)){
     int support = 0;
 
     void (*seg_init)(FRPSeg *) = NULL;
@@ -185,7 +193,11 @@ FRPSeg * frp_findseg(FRPFile * file,frp_str seg_name,void (**fp)(PARSE_SEG_ARGS)
 #define CURSOR_ARGS_CALL lyric, cursor, maxlen
 void frpWarringMessage(const frp_uint8 * lyric,frp_size cursor,frp_size max,char extra[]){
     frp_size beg = cursor,end = cursor;
-    while(beg > 0 && !frp_in_str(lyric[beg],"\r\n"))//lyric[beg] != '\n')
+    if(beg > 0 && lyric[beg] == '\n')//ensure beg is not in line end
+        beg--;
+    if(beg > 0 && lyric[beg] == '\r')
+        beg--;
+    while(beg > 0 && !frp_in_str(lyric[beg],"\r\n"))
         beg--;
     while(frp_in_str(lyric[beg],"\r\n"))
         beg++;
@@ -208,10 +220,15 @@ void frpWarringMessage(const frp_uint8 * lyric,frp_size cursor,frp_size max,char
     msg[end - beg]='\0';
 
     frpWarringCompileMessage(msg,linecount,offset,extra);
+    frpfree(msg);
 }
 void frpErrorMessage(const frp_uint8 * lyric,frp_size cursor,frp_size max,char extra[]){
     frp_size beg = cursor,end = cursor;
-    while(beg > 0 && !frp_in_str(lyric[beg],"\r\n"))//lyric[beg] != '\n')
+    if(beg > 0 && lyric[beg] == '\n')//ensure beg is not in line end
+        beg--;
+    if(beg > 0 && lyric[beg] == '\r')
+        beg--;
+    while(beg > 0 && !frp_in_str(lyric[beg],"\r\n"))
         beg--;
     while(frp_in_str(lyric[beg],"\r\n"))
         beg++;
@@ -234,6 +251,7 @@ void frpErrorMessage(const frp_uint8 * lyric,frp_size cursor,frp_size max,char e
     msg[end - beg]='\0';
 
     frpErrorCompileMessage(msg,linecount,offset,extra);
+    frpfree(msg);
 }
 
 void frpParseSpace(CURSOR_ARGS){
@@ -336,14 +354,19 @@ void frpParseComment(CURSOR_ARGS){
 //cursor should point to the title of seg line
 //get segment element here
 //这个函数将不同类型的segment定位到对应的函数中，并忽略未知的segment
-void frpParseSeg(FRPFile * file,frp_str name,frp_size * cursor,frp_size maxlen){
+int frpParseSeg(FRPFile * file,frp_str name,frp_size * cursor,frp_size maxlen){
     const frp_uint8 * lyric = file->textpool;
 #define NOT_END (*cursor < maxlen)
 #define FRP_READ (lyric[*cursor])
 #define FRP_MOVE_NEXT() do{if(NOT_END)(*cursor)++;}while(0)
 
 #define WARRING(str) frpWarringMessage(lyric,*cursor,maxlen,str)
-    void (*fp)(PARSE_SEG_ARGS);
+    int (*fp)(PARSE_SEG_ARGS);
+
+    if(frp_findseg_not_create(file,name) != NULL){
+        frpErrorMessage(lyric,*cursor - 1,maxlen,"Duplicate segments define.");
+        return -1;
+    }
     FRPSeg * seg = frp_findseg(file,name,&fp);
     if(seg == NULL){
         frpWarringMessage(lyric,*cursor - 1,maxlen,"Skip unsupport segments");
@@ -355,9 +378,10 @@ void frpParseSeg(FRPFile * file,frp_str name,frp_size * cursor,frp_size maxlen){
                 (*cursor)++;
             FRP_MOVE_NEXT();
         }
-        return;
+        return 1;//1 means skip the sigment
     }
-    fp(file,cursor,seg,maxlen);
+    return fp(file,cursor,seg,maxlen);
+
 #undef WARRING
 #undef NOT_END
 #undef FRP_READ
@@ -431,7 +455,7 @@ void flyc_release_lines(FRPSeg * seg){
     }
 }
 
-void flyc_seg_parser(PARSE_SEG_ARGS){
+int flyc_seg_parser(PARSE_SEG_ARGS){
     const frp_uint8 * lyric = file->textpool;
 #define NOT_END (*cursor < maxlen)
 #define FRP_READ (lyric[*cursor])
@@ -450,7 +474,7 @@ void flyc_seg_parser(PARSE_SEG_ARGS){
     //title here
     if(frp_in_str(FRP_READ ,"\r\n") || !NOT_END ){
         frpErrorMessage(lyric,*cursor,maxlen,"segment need property title here.");
-        return;
+        return -1;
     }
     while(!frp_in_str(FRP_READ ,"\r\n") && flyc->value_count < FRP_MAX_SEGMENT_PROPERTY_COUNT){
         flyc->value_names[flyc->value_count] = frpParseString(lyric,cursor,maxlen,",\r\n");
@@ -470,11 +494,11 @@ void flyc_seg_parser(PARSE_SEG_ARGS){
 
     if(prop_type_id == FRP_MAX_SEGMENT_PROPERTY_COUNT){
         frpErrorMessage(lyric,*cursor,maxlen,"'Type' property should be defined.");
-        return;
+        return -1;
     }
     if(prop_type_starttime == FRP_MAX_SEGMENT_PROPERTY_COUNT){
         frpErrorMessage(lyric,*cursor,maxlen,"'StartTime' property should be defined.");
-        return;
+        return -1;
     }
 
     FRPLine * currentLine = NULL;
@@ -484,7 +508,7 @@ void flyc_seg_parser(PARSE_SEG_ARGS){
     //lines here
     while(NOT_END){
         frpParseComment(lyric,cursor,maxlen);
-        if(!NOT_END)
+        if(!NOT_END || FRP_READ == '[')
             break;
         currentValue = frpmalloc(sizeof (FRPValue) * flyc->value_count);
         for(frp_size i=0;currentValue != NULL && i<flyc->value_count;i++){
@@ -686,14 +710,14 @@ void flyc_seg_parser(PARSE_SEG_ARGS){
     }
     //end of process the 'FRP_FLYC_PTYPE_DURATION's 'mnext'
 
-    return;
+    return 0;
 
 ERROR:
     //Todo release all memory plsease
     if(currentValue != NULL)
         frpfree(currentValue);//这里的currentValue并不一定是完整的初始化过的currentValue，直接free即可
     flyc_release_lines(seg);
-    return;
+    return -1;
 
 #undef WARRING
 #undef NOT_END
@@ -777,14 +801,17 @@ FRPFile * frpopen(const frp_uint8 * lyric,frp_size maxlength,frp_bool no_copy){
                 frpErrorMessage(lyric,cursor,maxlength,"invalid end of segment name.");
                 goto COMPILE_ERROR;
             }else{
+                FRP_MOVE_NEXT();
                 while(NOT_END && frp_in_str(FRP_READ,"\t "))
                     FRP_MOVE_NEXT();
-                if(frp_in_str(FRP_READ,"\r\n")){
+                if(!frp_in_str(FRP_READ,"\r\n")){
                     frpErrorMessage(lyric,cursor,maxlength,"return is needed after segment name.");
                     goto COMPILE_ERROR;
                 }
                 FRP_MOVE_NEXT();
-                frpParseSeg(file,tempstr,&cursor,maxlength);
+                if(frpParseSeg(file,tempstr,&cursor,maxlength) < 0){
+                    goto COMPILE_ERROR;
+                }
             }
             break;
         case ' ':
@@ -798,6 +825,9 @@ FRPFile * frpopen(const frp_uint8 * lyric,frp_size maxlength,frp_bool no_copy){
         case '\n':
             FRP_MOVE_NEXT();
             break;
+        default:
+            frpErrorMessage(lyric,cursor,maxlength,"segment should be declared here.");
+            goto COMPILE_ERROR;
         }
     }
 #undef NOT_END

@@ -78,22 +78,29 @@ void printFile(FRPFile * file){
     }
 }
 
-
-
-int main()
+int main(int argc,char **argv)
 {
     //windows only(change cmd to utf-8)
-    system("@chcp 65001 > nul");
+    //system("@chcp 65001 > nul");
 
-    FILE * f = fopen("lrc.txt","rb");
-    //这里要用二进制读入，传入必须是utf-8编码
+    if(argc != 2){
+        printf("file name is need.\n");
+        return 0;
+    }
+
+    FILE * f = fopen(argv[1],"rb");
+    //这里要用二进制读入，传入必须是utf-8编码的文件
     fread(buff,sizeof(frp_uint8),4096,f);
 
     frpinit();
     printf("ready to parse.\n");
     FRPFile * file = frpopen(buff,4096,1);
 
-    printFile(file);
 
+    if(file){
+        printFile(file);
+    }else {
+        printf("file is not open.");
+    }
     return 0;
 }

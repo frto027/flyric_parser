@@ -17,3 +17,6 @@ word,,,第四个歌词
 line,9900
 line,10005
 word,,,第五个歌词
+
+[ly]
+test segm
