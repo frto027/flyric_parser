@@ -68,11 +68,54 @@ typedef struct FRAnim{//property is solid
     FRALine * child;//linked list
 } FRAnim;
 // end of animation define elements
+// begin of curve define elements
+#define FRCE_TYPE_CONST 1
+#define FRCE_TYPE_FUNC  2
+#define FRCE_TYPE_ARGM  3
+#define FRCE_TYPE_CURVE 5
+
+
+#define FRCE_MAX_ARG_COUNT 10
+
+struct FRCurveLine;
+typedef struct FRCExpress{
+    int type;
+    union{
+        float con;
+        struct{
+            float (*fp)(float *);
+            frp_size argc;
+            struct FRCExpress *argv;//calculate this first,then input these into fp
+        }func;
+        union{
+            frp_size argid;//you should use this id to calculate arg
+        };
+        struct{
+            struct FRCurveLine * curveline;
+            struct FRCExpress *argv;
+        }curveexp;
+    };
+}FRCExpress;
+
+typedef struct FRCurveLine{
+    frp_str curvname;
+    FRCExpress *express;
+    frp_size argc;
+    struct FRCurveLine *next;
+    //express should have args count
+}FRCurveLine;
+typedef struct FRCurve{
+    FRCurveLine * lines;
+}FRCurve;
+
+// end of curve define elements
+
 typedef struct FRPSeg{
     frp_str segname;
     union{
         FRFlyc flyc;
         FRAnim anim;
+        FRCurve curve;
     };
 }FRPSeg;
 
@@ -96,6 +139,7 @@ typedef struct FRPFile{
 ///
 extern int frpstr_cmp(const frp_uint8 * textpool,const frp_str stra,const frp_str strb);
 extern int frpstr_rcmp(const frp_uint8 * textpool,const frp_str stra,const frp_uint8 strb[]);
+extern int frpstr_rrcmp(const frp_uint8 stra[],const frp_uint8 strb[]);
 //这里会处理转义符的
 extern void frpstr_fill(const frp_uint8 * textpool,const frp_str str,frp_uint8 buff[],frp_size size);
 //find and get a segment from file,do not build new segment.return null if failed
@@ -116,5 +160,34 @@ extern void frpdestroy(FRPFile * file);
 #define FRP_FLYC_PTYPE_INT      5 //整数
 
 extern void frp_flyc_add_parse_rule(const char *name,int frp_flyc_ptype);
+
+//variables for flex
+
+extern const frp_uint8 * frp_flex_textpool;
+extern frp_str frp_flex_textpoolstr;
+extern frp_size frp_bison_arg_listcount;
+extern frp_str frp_bison_arg_names[FRCE_MAX_ARG_COUNT];
+//function for flex,debug only
+//extern int frp_yyflex(void);
+extern int frp_bisonparse(void);
+extern const char * frp_bison_errormsg;
+#define FRP_BISON_TASK_CHECK 0
+#define FRP_BISON_TASK_CALC 1
+#define FRP_BISON_TASK_PRINT 2
+extern FRCExpress * frp_bison_result;
+extern int frp_bison_task;
+extern FRCurveLine *frp_bison_curves_tobeused;
+//defin of yystep
+//bison need this for there head file. but it did not gen.may be a bug.
+struct FRCExpressNodes;
+typedef union frp_bison_type{
+    struct FRCExpressNodes * listnodes;
+    int list_count_check;
+    FRCExpress * express;
+    float num;
+    char * temptext;
+}frp_bison_type;
+#define YYSTYPE frp_bison_type
+
 
 #endif

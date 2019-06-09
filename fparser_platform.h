@@ -33,5 +33,21 @@ extern void frpfree(void * ptr);
 extern void frpErrorCompileMessage(const frp_uint8 * msg,frp_size linecount,frp_size cursor,const char extra[]);
 extern void frpWarringCompileMessage(const frp_uint8 * msg,frp_size linecount,frp_size cursor,const char extra[]);
 
+typedef struct{
+    const char * name;
+    float (*fp)(float *);
+    frp_size argc;
+}FRCBuiltinFunctionType;
 
+extern FRCBuiltinFunctionType FRCBuiltinFunctions[];
+
+extern float frpCurveExpressAdd(float a,float b);
+extern float frpCurveExpressSub(float a,float b);
+extern float frpCurveExpressMul(float a,float b);
+extern float frpCurveExpressDiv(float a,float b);
+
+extern float frpCurveExpressAddW(float a[]);
+extern float frpCurveExpressSubW(float a[]);
+extern float frpCurveExpressMulW(float a[]);
+extern float frpCurveExpressDivW(float a[]);
 #endif // FPARSER_PLAT_H

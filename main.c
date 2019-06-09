@@ -1,11 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <time.h>
 #include "fparser.h"
 //this file is for debug only
-
+#define PERFORMANCE_COUNT_SEC 10
 frp_uint8 buff[4096];
-
+float frp_curve_expresult_calculate(FRCExpress * express,float * args);
 void printString(frp_str str){
     for(unsigned int i=str.beg,j=0;j<str.len;i++,j++)
         putchar(buff[i]);
@@ -95,12 +95,44 @@ int main(int argc,char **argv)
     frpinit();
     printf("ready to parse.\n");
     FRPFile * file = frpopen(buff,4096,1);
+    printf("parse over.\n");
 
+    time_t begtim = time(NULL);
+    long long tick = 0;
 
     if(file){
-        printFile(file);
+        //printFile(file);
+        FRPSeg * seg = NULL;
+        for(int i=0;i<file->segcount;i++){
+            if(frpstr_rcmp(file->textpool,file->segs[i].segname,"curve") == 0){
+                seg = file->segs + i;
+            }
+        }
+        if(seg){
+
+            while(time(NULL) - begtim < PERFORMANCE_COUNT_SEC){
+                FRCurveLine * line = seg->curve.lines;
+                while(line){
+                    frpstr_fill(file->textpool,line->curvname,buff,sizeof(buff));
+                    if(line->argc == 0){
+                        //注释printf才能测出性能，公式性能完全能满足运算要求
+                        printf("calc [%s]",buff);
+                        float result = frp_curve_expresult_calculate(line->express,NULL);
+                        printf("=>%f.\n",result);
+                        tick++;
+                    }else{
+                        //printf("skip [%s] has %d argument.\n",buff,line->argc);
+                    }
+                    line = line->next;
+                }
+            }
+            printf("calculate %lld in %d sec.",tick,PERFORMANCE_COUNT_SEC);
+        }else{
+            printf("no curve segment found.\n");
+        }
     }else {
         printf("file is not open.");
     }
     return 0;
 }
+

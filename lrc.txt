@@ -1,5 +1,12 @@
-[cursor]
-this version cannot parse this segmen
+[curve]
+a:1
+b:a()+1
+c(vv):b()+a() + vv
+d:c(2)+c(4)
+e:d()+d()
+f:e()+e()
+g:f()+f()
+h:g()+g()
 
 [flyc]
 Type,StartTime,Duration,Text,Anim,ColorR,ColorG,ColorB,Style,TransX,TransY,Rotate,ScaleX,ScaleY,AnchorX,AnchorY,SelfAnchorX,SelfAnchorY
@@ -18,5 +25,5 @@ line,9900
 line,10005
 word,,,第五个歌词
 
-[ly]
-test segm
+#[ly]
+#test segm

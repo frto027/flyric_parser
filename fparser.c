@@ -9,9 +9,13 @@
 
 
 int flyc_seg_parser(PARSE_SEG_ARGS);
+int frp_curve_seg_parser(PARSE_SEG_ARGS);
 void flyc_seg_init(FRPSeg * seg){
     seg->flyc.lines = NULL;
     seg->flyc.value_count = NULL;
+}
+void frp_curve_seg_init(FRPSeg * seg){
+    seg->curve.lines = NULL;
 }
 
 static struct{
@@ -20,6 +24,7 @@ static struct{
     void (*init)(FRPSeg* seg);
 } frp_seg_parserinfo[] = {
 {"flyc",flyc_seg_parser,flyc_seg_init},
+{"curve",frp_curve_seg_parser,frp_curve_seg_init},
 {NULL,NULL,NULL}
 };
 
@@ -67,6 +72,12 @@ void frp_utf8_fix(frp_uint8 buff[],frp_size i){
         else
             buff[j+k] = 0;
     }
+}
+int frpstr_rrcmp(const frp_uint8 stra[],const frp_uint8 strb[]){
+    while(*stra && *strb &&(*stra == *strb)){
+        stra++;strb++;
+    }
+    return *stra - *strb;
 }
 int frpstr_rcmp(const frp_uint8 * textpool,const frp_str stra,const frp_uint8 strb[]){
     frp_size blen = 0;
@@ -191,7 +202,7 @@ FRPSeg * frp_findseg(FRPFile * file,frp_str seg_name,int (**fp)(PARSE_SEG_ARGS))
 
 #define CURSOR_ARGS const frp_uint8 * lyric,frp_size * cursor,frp_size maxlen
 #define CURSOR_ARGS_CALL lyric, cursor, maxlen
-void frpWarringMessage(const frp_uint8 * lyric,frp_size cursor,frp_size max,char extra[]){
+void frpWarringMessage(const frp_uint8 * lyric,frp_size cursor,frp_size max,const char extra[]){
     frp_size beg = cursor,end = cursor;
     if(beg > 0 && lyric[beg] == '\n')//ensure beg is not in line end
         beg--;
@@ -222,7 +233,7 @@ void frpWarringMessage(const frp_uint8 * lyric,frp_size cursor,frp_size max,char
     frpWarringCompileMessage(msg,linecount,offset,extra);
     frpfree(msg);
 }
-void frpErrorMessage(const frp_uint8 * lyric,frp_size cursor,frp_size max,char extra[]){
+void frpErrorMessage(const frp_uint8 * lyric,frp_size cursor,frp_size max,const char extra[]){
     frp_size beg = cursor,end = cursor;
     if(beg > 0 && lyric[beg] == '\n')//ensure beg is not in line end
         beg--;
@@ -674,9 +685,9 @@ int flyc_seg_parser(PARSE_SEG_ARGS){
     frp_size process_count = 0;
 #define SELECT_INDEX_OF_PTYPE(type) do{ process_count = 0;\
     for(frp_size i=0;i<flyc->value_count;i++){ \
-        if(ptype_map[i] == type) \
-            process_index[process_count++]=i; \
-    }}while(0)
+    if(ptype_map[i] == type) \
+    process_index[process_count++]=i; \
+}}while(0)
 
     //process the 'FRP_FLYC_PTYPE_DURATION's 'mnext'
     SELECT_INDEX_OF_PTYPE(FRP_FLYC_PTYPE_DURATION);
@@ -725,6 +736,182 @@ ERROR:
 #undef FRP_MOVE_NEXT
 }
 //end of flyc parser
+
+//begin of curve seg parser
+float frp_curve_expresult_calculate(FRCExpress * express,float * args){
+    float narg[FRCE_MAX_ARG_COUNT];
+
+    switch (express->type) {
+    case FRCE_TYPE_CONST:
+        return express->con;
+    case FRCE_TYPE_FUNC:
+        for(frp_size i = 0;i<express->func.argc;i++){
+            narg[i] = frp_curve_expresult_calculate(express->func.argv + i,args);
+        }
+        return express->func.fp(narg);
+    case FRCE_TYPE_ARGM:
+        return args[express->argid];
+    case FRCE_TYPE_CURVE:
+        for(frp_size i=0;i<express->curveexp.curveline->argc;i++)
+            narg[i] = frp_curve_expresult_calculate(express->curveexp.argv + i,args);
+        return frp_curve_expresult_calculate(express->curveexp.curveline->express,narg);
+    }
+    //unknown expression
+    return 0;
+}
+
+//this will free express and its relation express
+void frp_curveexp_free(FRCExpress * express,frp_size len){
+    for(frp_size i = 0;i<len;i++){
+        switch (express->type) {
+        case FRCE_TYPE_FUNC:
+            frp_curveexp_free(express->func.argv,express->func.argc);
+            break;
+        case FRCE_TYPE_CURVE:
+            frp_curveexp_free(express->curveexp.argv,express->curveexp.curveline->argc);\
+            break;
+        }
+    }
+    frpfree(express);
+}
+//this will free line itself(not the next)
+void frp_curveline_free(FRCurveLine * line){
+    frp_curveexp_free(line->express,1);
+    frpfree(line);
+}
+int frp_curve_seg_parser(PARSE_SEG_ARGS){
+#define NOT_END (*cursor < maxlen)
+#define FRP_READ (lyric[*cursor])
+#define FRP_MOVE_NEXT() do{if(NOT_END)(*cursor)++;}while(0)
+
+#define WARRING(str) frpWarringMessage(lyric,*cursor,maxlen,str)
+#define SKIPHALF() do{if(FRP_READ == '\r')FRP_MOVE_NEXT();if(FRP_READ == '\n')FRP_MOVE_NEXT();}while(0)
+#define SKIP() do{if(!frp_in_str(FRP_READ,"\r\n")) while(NOT_END && !frp_in_str(FRP_READ,"\r\n"))cursor++;SKIPHALF();}while(0)
+
+    const frp_uint8 * lyric = file->textpool;
+
+    FRCurveLine * lineend = NULL;
+    frp_bison_curves_tobeused = NULL;
+
+    //global used
+    frp_flex_textpool = file->textpool;
+    while(NOT_END){
+        frpParseComment(lyric,cursor,maxlen);
+        if(FRP_READ == '[')
+            break;
+
+        frp_str name = frpParseString(lyric,cursor,maxlen,"(:\r\n");
+        if(name.len == 0){
+            WARRING("curve name is need.line skip.");
+            goto SKIP_THIS_LINE;
+        }
+        if(frp_in_str(FRP_READ,"\r\n")){
+            WARRING("body is needed.line skip.");
+            goto SKIP_THIS_LINE;
+        }
+        frp_bison_arg_listcount = 0;
+        if(FRP_READ == '('){
+            FRP_MOVE_NEXT();
+            //arg list
+            while(NOT_END && frp_bison_arg_listcount < FRCE_MAX_ARG_COUNT && !frp_in_str(FRP_READ,")\r\n")){
+                frp_bison_arg_names[frp_bison_arg_listcount] = frpParseString(lyric,cursor,maxlen,",)\r\n");
+                if(frp_bison_arg_names[frp_bison_arg_listcount].len == 0){
+                    WARRING("var name should not empty.");
+                    goto SKIP_THIS_LINE;
+                }
+                frp_bison_arg_listcount++;
+
+                if(frp_in_str(FRP_READ,")\r\n")){
+                    break;
+                }else{//','
+                    FRP_MOVE_NEXT();
+                }
+            }
+            if(!frp_in_str(FRP_READ,")\r\n")){
+                WARRING("Too many arguments here.line skip");
+                goto SKIP_THIS_LINE;
+            }
+            if(FRP_READ == ')'){
+                FRP_MOVE_NEXT();
+            }else{
+                //if(frp_in_str(FRP_READ,"\r\n") || !NOT_END){
+                WARRING("argument list should be closed.line skip");
+                goto SKIP_THIS_LINE;
+            }
+        }
+        if(FRP_READ != ':'){
+            WARRING("body is needed.line skip.");
+            goto SKIP_THIS_LINE;
+        }
+        FRP_MOVE_NEXT();
+        //turn to bison and parse now.
+
+        //global used
+        frp_str expstr = frpParseString(lyric,cursor,maxlen,"\r\n");
+
+        //frp_yyflex();
+
+//        frp_bison_task = FRP_BISON_TASK_PRINT;
+//        frp_flex_textpoolstr = expstr;
+//        frp_bisonparse();
+
+
+        frp_bison_task = FRP_BISON_TASK_CHECK;
+        frp_flex_textpoolstr = expstr;
+        if(frp_bisonparse()){
+            //failed
+            frpWarringMessage(lyric,*cursor,maxlen,frp_bison_errormsg);
+            goto SKIP_THIS_LINE;
+        }else{
+            //grammer is ok,calculate expression now
+            frp_bison_task = FRP_BISON_TASK_CALC;
+            frp_flex_textpoolstr = expstr;
+            frp_bisonparse();
+            if(frp_bison_result == NULL){
+                frpWarringMessage(lyric,*cursor,maxlen,"unknown error.");
+                goto ERROR;
+            }
+            //save result
+            FRCurveLine * line = frpmalloc(sizeof(FRCurveLine));
+            if(line == NULL){
+                frpErrorMessage(lyric,*cursor,maxlen,"no more memory.");
+                goto ERROR;
+            }
+            line->argc = frp_bison_arg_listcount;
+            line->express = frp_bison_result;
+            line->curvname = name;
+            line->next = NULL;
+            if(frp_bison_curves_tobeused == NULL){
+                frp_bison_curves_tobeused = lineend = line;
+            }else{
+                lineend->next = line;
+                lineend = line;
+            }
+        }
+        SKIPHALF();
+
+
+        continue;
+
+SKIP_THIS_LINE:
+        SKIP();
+    }
+    seg->curve.lines = frp_bison_curves_tobeused;
+    return 0;
+ERROR:
+    //free lines
+    while(frp_bison_curves_tobeused){
+        FRCurveLine * nline = frp_bison_curves_tobeused->next;
+        frp_curveline_free(frp_bison_curves_tobeused);
+        frp_bison_curves_tobeused = nline;
+    }
+    return -1;
+#undef WARRING
+#undef NOT_END
+#undef FRP_READ
+#undef FRP_MOVE_NEXT
+}
+//end of curve seg parser
 
 void frpinit(){
     const char * DefaultFloatProperty[] = {
