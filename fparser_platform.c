@@ -63,10 +63,14 @@ float frpCurveExpressDiv(float a,float b){
     return a / b;
 }
 
+
 float frpCurveExpressAddW(float a[]){return frpCurveExpressAdd(a[0],a[1]);}
 float frpCurveExpressSubW(float a[]){return frpCurveExpressSub(a[0],a[1]);}
 float frpCurveExpressMulW(float a[]){return frpCurveExpressMul(a[0],a[1]);}
 float frpCurveExpressDivW(float a[]){return frpCurveExpressDiv(a[0],a[1]);}
+float frpCurveExpressNegW(float *a){
+    return -*a;
+}
 
 FRCBuiltinFunctionType FRCBuiltinFunctions[] = {
     {"sin",frp_sin,1},

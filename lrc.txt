@@ -1,8 +1,8 @@
 [curve]
-a:1
+a:-1
 b:a()+1
-c(vv):b()+a() + vv
-d:c(2)+c(4)
+c(vv,dd):b()+a() + vv*dd
+d:c(2,2)+c(4,7)
 e:d()+d()
 f:e()+e()
 g:f()+f()

@@ -4,7 +4,7 @@
 
 it is not a complete library
 
-暂时不写什么文档了，一个歌词的样例见lrc.txt。歌词的详细个是定义见file_format_define.txt
+暂时不写什么文档了，一个歌词的样例见lrc.txt。歌词的详细格式定义见file_format_define.txt
 
 本项目工程使用qt编辑器，偷懒的话直接用即可。
 
@@ -12,7 +12,12 @@ it is not a complete library
 
 你无需安装flex和bison，直接将能看到的.c文件放在一起编译就行了。
 
-如果想要修改动画语法，那需要安装flex和bison，使用这条指令：
+如果想要修改曲线函数的语法定义，那需要安装flex和bison
+开发使用环境`fedora`下面
+```
+yum install -y flex bison
+```
+生成语法定义的`.c`文件
 ```
 flex --prefix=frp_bison frp_flex.l
 bison -d --name-prefix=frp_bison frp_bison.y
@@ -27,10 +32,10 @@ bison -d --name-prefix=frp_bison frp_bison.y
 ------|------
 fparser.c/h|主要文件，所有的程序都在这里
 fparser_platform.c/h|平台相关的东西，做移植时使用
-lex.frp_bison.c|flex词法分析器生成的此法分析文件
+lex.frp_bison.c|flex词法分析器生成的词法分析文件
 frp_bison.tab.c/h|bison语法分析器生成的语法文件，用于解析表达式
 
-此外还有一些文件是用于此法分析器的
+此外还有一些文件是用于词法分析器的
 
 文件名|作用
 ---|---

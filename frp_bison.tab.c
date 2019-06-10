@@ -548,18 +548,18 @@ union yyalloc
 #endif /* !YYCOPY_NEEDED */
 
 /* YYFINAL -- State number of the termination state.  */
-#define YYFINAL  8
+#define YYFINAL  10
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   29
+#define YYLAST   38
 
 /* YYNTOKENS -- Number of terminals.  */
 #define YYNTOKENS  12
 /* YYNNTS -- Number of nonterminals.  */
 #define YYNNTS  4
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  13
+#define YYNRULES  14
 /* YYNSTATES -- Number of states.  */
-#define YYNSTATES  24
+#define YYNSTATES  26
 
 /* YYTRANSLATE[YYX] -- Symbol number corresponding to YYX as returned
    by yylex, with out-of-bounds checking.  */
@@ -606,7 +606,7 @@ static const yytype_uint8 yytranslate[] =
 static const yytype_uint16 yyrline[] =
 {
        0,   191,   191,   204,   221,   240,   253,   266,   279,   291,
-     305,   317,   338,   369
+     305,   317,   337,   358,   389
 };
 #endif
 
@@ -630,10 +630,10 @@ static const yytype_uint16 yytoknum[] =
 };
 # endif
 
-#define YYPACT_NINF -4
+#define YYPACT_NINF -7
 
 #define yypact_value_is_default(Yystate) \
-  (!!((Yystate) == (-4)))
+  (!!((Yystate) == (-7)))
 
 #define YYTABLE_NINF -1
 
@@ -644,9 +644,9 @@ static const yytype_uint16 yytoknum[] =
      STATE-NUM.  */
 static const yytype_int8 yypact[] =
 {
-      -2,    -4,     9,    -2,    20,    17,     3,    10,    -4,    -2,
-      -2,    -2,    -2,    -4,    18,    17,    -4,    -3,    -3,    -4,
-      -4,    -2,    -4,    -4
+      21,    -7,    -5,    21,    21,    10,     1,    12,    -6,    27,
+      -7,    21,    21,    21,    21,    -7,     8,     1,    -7,    -6,
+      -6,    -7,    -7,    21,    -7,    -7
 };
 
   /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
@@ -654,21 +654,21 @@ static const yytype_int8 yypact[] =
      means the default is an error.  */
 static const yytype_uint8 yydefact[] =
 {
-       0,     9,    13,     0,     0,     2,     0,     0,     1,     0,
-       0,     0,     0,    11,     0,     4,    10,     5,     6,     7,
-       8,     0,    12,     3
+       0,     9,    14,     0,     0,     0,     2,     0,    11,     0,
+       1,     0,     0,     0,     0,    12,     0,     4,    10,     5,
+       6,     7,     8,     0,    13,     3
 };
 
   /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int8 yypgoto[] =
 {
-      -4,    -4,     5,     0
+      -7,    -7,    -3,     0
 };
 
   /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int8 yydefgoto[] =
 {
-      -1,     4,    14,    15
+      -1,     5,    16,    17
 };
 
   /* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
@@ -676,39 +676,41 @@ static const yytype_int8 yydefgoto[] =
      number is the opposite.  If YYTABLE_NINF, syntax error.  */
 static const yytype_uint8 yytable[] =
 {
-       5,     1,     2,     7,    11,    12,     1,     2,     3,    17,
-      18,    19,    20,     3,    13,     9,    10,    11,    12,     6,
-       8,    16,     9,    10,    11,    12,    23,    21,     0,    22
+       6,    13,    14,     8,     9,     7,    11,    12,    13,    14,
+      10,    19,    20,    21,    22,     1,     2,    23,     3,    24,
+      25,     0,     4,    15,     1,     2,     0,     3,     0,     0,
+       0,     4,    11,    12,    13,    14,     0,     0,    18
 };
 
 static const yytype_int8 yycheck[] =
 {
-       0,     3,     4,     3,     7,     8,     3,     4,    10,     9,
-      10,    11,    12,    10,    11,     5,     6,     7,     8,    10,
-       0,    11,     5,     6,     7,     8,    21,     9,    -1,    11
+       0,     7,     8,     3,     4,    10,     5,     6,     7,     8,
+       0,    11,    12,    13,    14,     3,     4,     9,     6,    11,
+      23,    -1,    10,    11,     3,     4,    -1,     6,    -1,    -1,
+      -1,    10,     5,     6,     7,     8,    -1,    -1,    11
 };
 
   /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
      symbol of state STATE-NUM.  */
 static const yytype_uint8 yystos[] =
 {
-       0,     3,     4,    10,    13,    15,    10,    15,     0,     5,
-       6,     7,     8,    11,    14,    15,    11,    15,    15,    15,
-      15,     9,    11,    14
+       0,     3,     4,     6,    10,    13,    15,    10,    15,    15,
+       0,     5,     6,     7,     8,    11,    14,    15,    11,    15,
+      15,    15,    15,     9,    11,    14
 };
 
   /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
 static const yytype_uint8 yyr1[] =
 {
        0,    12,    13,    14,    14,    15,    15,    15,    15,    15,
-      15,    15,    15,    15
+      15,    15,    15,    15,    15
 };
 
   /* YYR2[YYN] -- Number of symbols on the right hand side of rule YYN.  */
 static const yytype_uint8 yyr2[] =
 {
        0,     2,     1,     3,     1,     3,     3,     3,     3,     1,
-       3,     3,     4,     1
+       3,     2,     3,     4,     1
 };
 
 
@@ -1398,7 +1400,7 @@ yyreduce:
     }
     YYACCEPT;
 }
-#line 1402 "frp_bison.tab.c" /* yacc.c:1648  */
+#line 1404 "frp_bison.tab.c" /* yacc.c:1648  */
     break;
 
   case 3:
@@ -1420,7 +1422,7 @@ yyreduce:
         break;
     }
 }
-#line 1424 "frp_bison.tab.c" /* yacc.c:1648  */
+#line 1426 "frp_bison.tab.c" /* yacc.c:1648  */
     break;
 
   case 4:
@@ -1442,7 +1444,7 @@ yyreduce:
         break;
     }
 }
-#line 1446 "frp_bison.tab.c" /* yacc.c:1648  */
+#line 1448 "frp_bison.tab.c" /* yacc.c:1648  */
     break;
 
   case 5:
@@ -1460,7 +1462,7 @@ yyreduce:
         break;
     }
 }
-#line 1464 "frp_bison.tab.c" /* yacc.c:1648  */
+#line 1466 "frp_bison.tab.c" /* yacc.c:1648  */
     break;
 
   case 6:
@@ -1478,7 +1480,7 @@ yyreduce:
         break;
     }
  }
-#line 1482 "frp_bison.tab.c" /* yacc.c:1648  */
+#line 1484 "frp_bison.tab.c" /* yacc.c:1648  */
     break;
 
   case 7:
@@ -1496,7 +1498,7 @@ yyreduce:
         break;
     }
 }
-#line 1500 "frp_bison.tab.c" /* yacc.c:1648  */
+#line 1502 "frp_bison.tab.c" /* yacc.c:1648  */
     break;
 
   case 8:
@@ -1513,7 +1515,7 @@ yyreduce:
         break;
     }
 }
-#line 1517 "frp_bison.tab.c" /* yacc.c:1648  */
+#line 1519 "frp_bison.tab.c" /* yacc.c:1648  */
     break;
 
   case 9:
@@ -1532,7 +1534,7 @@ yyreduce:
         break;
     }
 }
-#line 1536 "frp_bison.tab.c" /* yacc.c:1648  */
+#line 1538 "frp_bison.tab.c" /* yacc.c:1648  */
     break;
 
   case 10:
@@ -1549,11 +1551,36 @@ yyreduce:
         break;
     }
  }
-#line 1553 "frp_bison.tab.c" /* yacc.c:1648  */
+#line 1555 "frp_bison.tab.c" /* yacc.c:1648  */
     break;
 
   case 11:
 #line 317 "frp_bison.y" /* yacc.c:1648  */
+    {
+    switch(frp_bison_task){
+    case FRP_BISON_TASK_PRINT:
+        printf("[-]");
+        break;
+    case FRP_BISON_TASK_CHECK:
+        break;
+    case FRP_BISON_TASK_CALC:
+        if((yyvsp[0]).express->type == FRCE_TYPE_CONST){
+            (yyvsp[0]).express->con = frpCurveExpressNegW(&((yyvsp[0]).express->con));
+            (yyval) = (yyvsp[0]);
+        }else{
+            (yyval).express->type = FRCE_TYPE_FUNC;
+            (yyval).express->func.argc = 1;
+            (yyval).express->func.fp = frpCurveExpressNegW;
+            (yyval).express->func.argv = (yyvsp[0]).express;
+        }
+        break;
+    }
+}
+#line 1580 "frp_bison.tab.c" /* yacc.c:1648  */
+    break;
+
+  case 12:
+#line 337 "frp_bison.y" /* yacc.c:1648  */
     {
 
     switch(frp_bison_task){
@@ -1563,8 +1590,8 @@ yyreduce:
         break;
     case FRP_BISON_TASK_CHECK:
         if(!frp_bison_exist_express_by_name((yyvsp[-2]).temptext,0)){
+            frp_bison_report_error_varstr("parse error:function name not declared -> ",(yyvsp[-2]).temptext);
             frpfree((yyvsp[-2]).temptext);
-            frp_bison_errormsg = "function not declared";
             YYABORT;
         }
         frpfree((yyvsp[-2]).temptext);
@@ -1575,11 +1602,11 @@ yyreduce:
         }
         break;
     }
-#line 1579 "frp_bison.tab.c" /* yacc.c:1648  */
+#line 1606 "frp_bison.tab.c" /* yacc.c:1648  */
     break;
 
-  case 12:
-#line 338 "frp_bison.y" /* yacc.c:1648  */
+  case 13:
+#line 358 "frp_bison.y" /* yacc.c:1648  */
     {
     switch(frp_bison_task){
     case FRP_BISON_TASK_PRINT:
@@ -1588,7 +1615,7 @@ yyreduce:
         break;
     case FRP_BISON_TASK_CHECK:
         if(!frp_bison_exist_express_by_name((yyvsp[-3]).temptext,(yyvsp[-1]).list_count_check)){
-            frp_bison_report_error_varstr("function name not declared -> ",(yyvsp[-3]).temptext);
+            frp_bison_report_error_varstr("parse error:function name not declared -> ",(yyvsp[-3]).temptext);
             frpfree((yyvsp[-3]).temptext);
             YYABORT;
         }
@@ -1611,11 +1638,11 @@ yyreduce:
         break;
     }
 }
-#line 1615 "frp_bison.tab.c" /* yacc.c:1648  */
+#line 1642 "frp_bison.tab.c" /* yacc.c:1648  */
     break;
 
-  case 13:
-#line 369 "frp_bison.y" /* yacc.c:1648  */
+  case 14:
+#line 389 "frp_bison.y" /* yacc.c:1648  */
     {
     switch(frp_bison_task){
     case FRP_BISON_TASK_PRINT:
@@ -1624,7 +1651,7 @@ yyreduce:
         break;
     case FRP_BISON_TASK_CHECK:
         if(!frp_bison_exist_arg_express((yyvsp[0]).temptext)){
-            frp_bison_report_error_varstr("argument name not declared -> ",(yyvsp[0]).temptext);
+            frp_bison_report_error_varstr("parse error:argument name not declared -> ",(yyvsp[0]).temptext);
             frpfree((yyvsp[0]).temptext);
             YYABORT;
         }
@@ -1636,11 +1663,11 @@ yyreduce:
         break;
     }
 }
-#line 1640 "frp_bison.tab.c" /* yacc.c:1648  */
+#line 1667 "frp_bison.tab.c" /* yacc.c:1648  */
     break;
 
 
-#line 1644 "frp_bison.tab.c" /* yacc.c:1648  */
+#line 1671 "frp_bison.tab.c" /* yacc.c:1648  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -1868,7 +1895,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 390 "frp_bison.y" /* yacc.c:1907  */
+#line 410 "frp_bison.y" /* yacc.c:1907  */
 
 
 

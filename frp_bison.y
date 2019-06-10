@@ -314,6 +314,26 @@ E   :   E '+' E         {
         break;
     }
  }
+    |   '-' E {
+    switch(frp_bison_task){
+    case FRP_BISON_TASK_PRINT:
+        printf("[-]");
+        break;
+    case FRP_BISON_TASK_CHECK:
+        break;
+    case FRP_BISON_TASK_CALC:
+        if($2.express->type == FRCE_TYPE_CONST){
+            $2.express->con = frpCurveExpressNegW(&($2.express->con));
+            $$ = $2;
+        }else{
+            $$.express->type = FRCE_TYPE_FUNC;
+            $$.express->func.argc = 1;
+            $$.express->func.fp = frpCurveExpressNegW;
+            $$.express->func.argv = $2.express;
+        }
+        break;
+    }
+}
     |   T_WORD '(' ')'{
 
     switch(frp_bison_task){
@@ -323,8 +343,8 @@ E   :   E '+' E         {
         break;
     case FRP_BISON_TASK_CHECK:
         if(!frp_bison_exist_express_by_name($1.temptext,0)){
+            frp_bison_report_error_varstr("parse error:function name not declared -> ",$1.temptext);
             frpfree($1.temptext);
-            frp_bison_errormsg = "function not declared";
             YYABORT;
         }
         frpfree($1.temptext);
@@ -343,7 +363,7 @@ E   :   E '+' E         {
         break;
     case FRP_BISON_TASK_CHECK:
         if(!frp_bison_exist_express_by_name($1.temptext,$3.list_count_check)){
-            frp_bison_report_error_varstr("function name not declared -> ",$1.temptext);
+            frp_bison_report_error_varstr("parse error:function name not declared -> ",$1.temptext);
             frpfree($1.temptext);
             YYABORT;
         }
@@ -374,7 +394,7 @@ E   :   E '+' E         {
         break;
     case FRP_BISON_TASK_CHECK:
         if(!frp_bison_exist_arg_express($1.temptext)){
-            frp_bison_report_error_varstr("argument name not declared -> ",$1.temptext);
+            frp_bison_report_error_varstr("parse error:argument name not declared -> ",$1.temptext);
             frpfree($1.temptext);
             YYABORT;
         }
