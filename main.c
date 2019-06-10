@@ -110,7 +110,8 @@ int main(int argc,char **argv)
         }
         if(seg){
 
-            while(time(NULL) - begtim < PERFORMANCE_COUNT_SEC){
+            //while(time(NULL) - begtim < PERFORMANCE_COUNT_SEC)
+            {
                 FRCurveLine * line = seg->curve.lines;
                 while(line){
                     frpstr_fill(file->textpool,line->curvname,buff,sizeof(buff));

@@ -51,4 +51,8 @@ extern float frpCurveExpressSubW(float a[]);
 extern float frpCurveExpressMulW(float a[]);
 extern float frpCurveExpressDivW(float a[]);
 extern float frpCurveExpressNegW(float *a);
+
+
+extern void frpAnimFuncArgInit();
+extern void frpAnimFuncArgCalc(float *);
 #endif // FPARSER_PLAT_H

@@ -8,6 +8,12 @@ f:e()+e()
 g:f()+f()
 h:g()+g()
 
+[anim]
+Name,Property,Func,During,Offset,PlayTime
+Shake,ColorR,x,5,0,Start
+Shake,ColorG,
+
+
 [flyc]
 Type,StartTime,Duration,Text,Anim,ColorR,ColorG,ColorB,Style,TransX,TransY,Rotate,ScaleX,ScaleY,AnchorX,AnchorY,SelfAnchorX,SelfAnchorY
 

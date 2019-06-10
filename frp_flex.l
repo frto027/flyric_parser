@@ -22,10 +22,10 @@ frp_str frp_flex_textpoolstr;
     }
 */
 %}
-OPERATOR        [-+*/()=,:]
+OPERATOR        [-+*/\[\]()=,:]
 NUMBER          (\.[0-9]+)|([0-9]*\.?[0-9]*)
 WHITSPACE       [ \t]*
-WORD            [^-+*/()=,:0-9 \t\r\n]+
+WORD            [^-+*/\\[\]()=,:0-9 \t\r\n]+
 %%
 {OPERATOR}      {
     //printf("[%c]",*yytext);

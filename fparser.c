@@ -10,12 +10,16 @@
 
 int flyc_seg_parser(PARSE_SEG_ARGS);
 int frp_curve_seg_parser(PARSE_SEG_ARGS);
+int frp_anim_seg_parser(PARSE_SEG_ARGS);
 void flyc_seg_init(FRPSeg * seg){
     seg->flyc.lines = NULL;
     seg->flyc.value_count = NULL;
 }
 void frp_curve_seg_init(FRPSeg * seg){
     seg->curve.lines = NULL;
+}
+void frp_anim_seg_init(FRPSeg * seg){
+    seg->anim.lines = NULL;
 }
 
 static struct{
@@ -25,6 +29,7 @@ static struct{
 } frp_seg_parserinfo[] = {
 {"flyc",flyc_seg_parser,flyc_seg_init},
 {"curve",frp_curve_seg_parser,frp_curve_seg_init},
+{"anim",frp_anim_seg_parser,frp_anim_seg_init},
 {NULL,NULL,NULL}
 };
 
@@ -241,7 +246,7 @@ void frpErrorMessage(const frp_uint8 * lyric,frp_size cursor,frp_size max,const 
         beg--;
     while(beg > 0 && !frp_in_str(lyric[beg],"\r\n"))
         beg--;
-    while(frp_in_str(lyric[beg],"\r\n"))
+    while(beg < end && frp_in_str(lyric[beg],"\r\n"))
         beg++;
     while(end < max && !frp_in_str(lyric[end] , "\r\n"))
         end++;
@@ -284,6 +289,24 @@ frp_str frpParseString(CURSOR_ARGS,const char stops[]){
     while(*cursor < maxlen && !frp_in_str(lyric[*cursor],stops)){
         if(lyric[*cursor] == '\\')
             frpParseSkipEscape(CURSOR_ARGS_CALL);
+        (*cursor)++;
+    }
+
+    s.len = *cursor - s.beg;
+    return s;
+}
+frp_str frpParseClosedString(CURSOR_ARGS,const char stops[],const char hardstops[]){
+    frp_str s;
+    s.beg = *cursor;
+    frp_size level = 0;
+
+    while(*cursor < maxlen && !frp_in_str(lyric[*cursor],hardstops) &&(level > 0 || !frp_in_str(lyric[*cursor],stops))){
+        if(lyric[*cursor] == '\\')
+            frpParseSkipEscape(CURSOR_ARGS_CALL);
+        if(lyric[*cursor] == '(')
+            level++;
+        if(lyric[*cursor] == ')')
+            level--;
         (*cursor)++;
     }
 
@@ -738,7 +761,47 @@ ERROR:
 //end of flyc parser
 
 //begin of curve seg parser
-float frp_curve_expresult_calculate(FRCExpress * express,float * args){
+
+void frp_curve_exp_progress_property(FRCExpress * exp,FRFlyc * flyc,const frp_uint8 * textpool){
+    switch (exp->type) {
+    case FRCE_TYPE_FUNC:
+        for(frp_size i = 0;i<exp->func.argc;i++)
+            frp_curve_exp_progress_property(exp->func.argv + i,flyc,textpool);
+        break;
+    case FRCE_TYPE_CURVE:
+        for(frp_size i = 0;i<exp->curveexp.curveline->argc;i++)
+            frp_curve_exp_progress_property(exp->curveexp.argv + i,flyc,textpool);
+        break;
+    case FRCE_TYPE_PROPERTY_NAME:
+        //progress here
+    {
+        frp_size i;
+        for(i = 0;i<flyc->value_count;i++){
+            if(frpstr_rcmp(textpool,flyc->value_names[i],exp->propname) == 0){
+                frpfree(exp->propname);
+                exp->propid = i;
+                exp->type = FRCE_TYPE_PROPERTY;
+                break;
+            }
+        }
+        if(i == flyc->value_count){
+            frpWarringCompileMessage(exp->propname,(frp_size)(-1),0,"property not found in [flyc] segment.");
+            exp->type = FRCE_TYPE_CONST;
+            exp->con = 0;
+            frpfree(exp->propname);
+            //property name not found.
+        }
+    }
+    }
+}
+//please call this after flyc segment
+void frp_curve_progress_property(FRCurve * curve,FRFlyc * flyc,const frp_uint8 * textpool){
+    for(FRCurveLine *lines = curve->lines;lines;lines = lines->next){
+        frp_curve_exp_progress_property(lines->express,flyc,textpool);
+    }
+}
+
+float frp_curve_expresult_calculate(FRCExpress * express,float * args,FRPValue * values){
     float narg[FRCE_MAX_ARG_COUNT];
 
     switch (express->type) {
@@ -746,15 +809,32 @@ float frp_curve_expresult_calculate(FRCExpress * express,float * args){
         return express->con;
     case FRCE_TYPE_FUNC:
         for(frp_size i = 0;i<express->func.argc;i++){
-            narg[i] = frp_curve_expresult_calculate(express->func.argv + i,args);
+            narg[i] = frp_curve_expresult_calculate(express->func.argv + i,args,values);
         }
         return express->func.fp(narg);
     case FRCE_TYPE_ARGM:
         return args[express->argid];
     case FRCE_TYPE_CURVE:
         for(frp_size i=0;i<express->curveexp.curveline->argc;i++)
-            narg[i] = frp_curve_expresult_calculate(express->curveexp.argv + i,args);
-        return frp_curve_expresult_calculate(express->curveexp.curveline->express,narg);
+            narg[i] = frp_curve_expresult_calculate(express->curveexp.argv + i,args,values);
+        return frp_curve_expresult_calculate(express->curveexp.curveline->express,narg,values);
+    case FRCE_TYPE_PROPERTY_NAME:
+        //never do this
+        return 0;
+    case FRCE_TYPE_PROPERTY:
+        if(values == NULL)
+            return 0;//no property offered
+        switch (values[express->propid].type) {
+        case FRPVALUE_TYPE_INT:
+            return values[express->propid].integer;
+        case FRPVALUE_TYPE_NUM:
+            return values[express->propid].num;
+        case FRPVALUE_TYPE_TIM:
+            return values[express->argid].time;
+        default:
+            //invalid type.
+            return 0;
+        }
     }
     //unknown expression
     return 0;
@@ -786,7 +866,7 @@ int frp_curve_seg_parser(PARSE_SEG_ARGS){
 
 #define WARRING(str) frpWarringMessage(lyric,*cursor,maxlen,str)
 #define SKIPHALF() do{if(FRP_READ == '\r')FRP_MOVE_NEXT();if(FRP_READ == '\n')FRP_MOVE_NEXT();}while(0)
-#define SKIP() do{if(!frp_in_str(FRP_READ,"\r\n")) while(NOT_END && !frp_in_str(FRP_READ,"\r\n"))cursor++;SKIPHALF();}while(0)
+#define SKIP() do{if(!frp_in_str(FRP_READ,"\r\n")) while(NOT_END && !frp_in_str(FRP_READ,"\r\n"))(*cursor)++;SKIPHALF();}while(0)
 
     const frp_uint8 * lyric = file->textpool;
 
@@ -794,6 +874,7 @@ int frp_curve_seg_parser(PARSE_SEG_ARGS){
     frp_bison_curves_tobeused = NULL;
 
     //global used
+    frp_bison_arg_source = FRP_BISON_ARG_SOURCE_TEXTPOOL;
     frp_flex_textpool = file->textpool;
     while(NOT_END){
         frpParseComment(lyric,cursor,maxlen);
@@ -851,9 +932,9 @@ int frp_curve_seg_parser(PARSE_SEG_ARGS){
 
         //frp_yyflex();
 
-//        frp_bison_task = FRP_BISON_TASK_PRINT;
-//        frp_flex_textpoolstr = expstr;
-//        frp_bisonparse();
+        //        frp_bison_task = FRP_BISON_TASK_PRINT;
+        //        frp_flex_textpoolstr = expstr;
+        //        frp_bisonparse();
 
 
         frp_bison_task = FRP_BISON_TASK_CHECK;
@@ -912,7 +993,304 @@ ERROR:
 #undef FRP_MOVE_NEXT
 }
 //end of curve seg parser
+//begin of anim seg parser
+//add prop to target anim line
+void frp_anim_seg_addprop(const frp_uint8 * textpool,FRAnim *anim,frp_str animname,FRAProp * prop){
+    FRALine * line;
+    if(anim->lines == NULL){
+        line = anim->lines = frpmalloc(sizeof(FRALine));
+        line->next = NULL;
+        line->prop = NULL;
+        line->name = animname;
+    }else{
+        line = anim->lines;
+        while(line->next && frpstr_cmp(textpool,animname,line->name) != 0){
+            line = line->next;
+        }
+        if(frpstr_cmp(textpool,animname,line->name) != 0){
+            line->next = frpmalloc(sizeof(FRALine));
+            line = line->next;
+            line->next = NULL;
+            line->prop = NULL;
+            line->name = animname;
+        }else{
+            //line is finded
+        }
+    }
 
+    if(line->prop == NULL)
+        line->prop = prop;
+    else{
+        FRAProp * tail = line->prop;
+        while(tail->next)
+            tail = tail->next;
+        tail->next = prop;
+    }
+    prop->next = NULL;
+
+}
+int frp_anim_seg_parser(PARSE_SEG_ARGS){
+#define NOT_END (*cursor < maxlen)
+#define FRP_READ (lyric[*cursor])
+#define FRP_MOVE_NEXT() do{if(NOT_END)(*cursor)++;}while(0)
+
+#define WARRING(str) frpWarringMessage(lyric,*cursor,maxlen,str)
+#define SKIPHALF() do{if(FRP_READ == '\r')FRP_MOVE_NEXT();if(FRP_READ == '\n')FRP_MOVE_NEXT();}while(0)
+#define SKIP() do{if(!frp_in_str(FRP_READ,"\r\n")) while(NOT_END && !frp_in_str(FRP_READ,"\r\n"))(*cursor)++;SKIPHALF();}while(0)
+
+    const frp_uint8 * lyric = file->textpool;
+
+    frpParseComment(lyric,cursor,maxlen);
+
+#define COL_UNKNOWN       0
+#define COL_NAME        1
+#define COL_PROPERTY    2
+#define COL_FUNC        3
+#define COL_DURING      4
+#define COL_OFFSET      5
+#define COL_PLAYTIME    6
+
+#define COL_USEDCOUNT 7
+
+#define COL_MAX 40
+    frp_bool colgot[COL_USEDCOUNT];
+
+    frp_size colmap[COL_MAX];
+
+    for(int i =0;i<COL_USEDCOUNT;i++)
+        colgot[i] = 0;
+    for(int i=0;i<COL_MAX;i++){
+        colmap[0] = COL_MAX;
+    }
+
+    if(!NOT_END || FRP_READ == '['){
+        frpWarringMessage(lyric,*cursor,maxlen,"anim segment is empty.");
+        return 0;
+    }
+    frp_size col_count = 0;
+    while(NOT_END){
+        if(col_count == COL_MAX){
+            frpErrorMessage(lyric,*cursor,maxlen,"too many property to be defined.");
+            return -1;
+        }
+        frp_str lname = frpParseString(lyric,cursor,maxlen,",\r\n");
+        if(frpstr_rcmp(lyric,lname,ANSI2UTF8("Name")) == 0){
+            colmap[col_count] = COL_NAME;
+        }else if(frpstr_rcmp(lyric,lname,ANSI2UTF8("Property")) == 0){
+            colmap[col_count] = COL_PROPERTY;
+        }else if(frpstr_rcmp(lyric,lname,ANSI2UTF8("Func")) == 0){
+            colmap[col_count] = COL_FUNC;
+        }else if(frpstr_rcmp(lyric,lname,ANSI2UTF8("During")) == 0){
+            colmap[col_count] = COL_DURING;
+        }else if(frpstr_rcmp(lyric,lname,ANSI2UTF8("Offset")) == 0){
+            colmap[col_count] = COL_OFFSET;
+        }else if(frpstr_rcmp(lyric,lname,ANSI2UTF8("PlayTime")) == 0){
+            colmap[col_count] = COL_PLAYTIME;
+        }else{
+            colmap[col_count] = COL_UNKNOWN;
+        }
+        colgot[colmap[col_count]] = 1;
+        col_count++;
+        if(FRP_READ == ',')
+            FRP_MOVE_NEXT();
+        if(frp_in_str(FRP_READ,"\r\n")){
+            SKIPHALF();
+            break;
+        }
+    }
+    //check property
+    if(!colgot[COL_NAME])      { frpErrorMessage(lyric,*cursor,maxlen,"Property [Name] is need.");return -1; }
+    if(!colgot[COL_PROPERTY])  { frpErrorMessage(lyric,*cursor,maxlen,"Property [Property] is need.");return -1; }
+    if(!colgot[COL_FUNC])      { frpErrorMessage(lyric,*cursor,maxlen,"Property [Func] is need.");return -1; }
+    if(!colgot[COL_DURING])    { frpErrorMessage(lyric,*cursor,maxlen,"Property [During] is need.");return -1; }
+    if(!colgot[COL_OFFSET])    { frpErrorMessage(lyric,*cursor,maxlen,"Property [Offset] is need.");return -1; }
+    if(!colgot[COL_PLAYTIME])  { frpErrorMessage(lyric,*cursor,maxlen,"Property [PlayTime] is need.");return -1; }
+    //memory of last line
+    frp_str linetext[COL_MAX];
+    float lastoffset = 0;
+    int lastplaytime = 0;
+    for(int i=0;i<COL_MAX;i++)
+        linetext[i].len = 0;
+
+    //ready for bison parse
+    frp_flex_textpool = lyric;
+    frp_str col_func_str = {0,0},col_during_str = {0,0};
+
+    while(NOT_END){
+        frpParseComment(lyric,cursor,maxlen);
+        if(!NOT_END || FRP_READ == '[')
+            break;
+#define EXTEND_LASTLINE (!NOT_END || frp_in_str(FRP_READ,"\r\n"))
+        //read a line
+        frp_str newname = {0,0};
+        FRAProp *prop = frpmalloc(sizeof(FRAProp));
+
+        frp_bison_arg_source = FRP_BISON_ARG_SOURCE_RAWSTR;
+        frp_bison_task = FRP_BISON_TASK_CHECK;
+
+        for(frp_size col = 0;col < col_count;col++){
+            switch (colmap[col])
+            {
+            case COL_NAME:
+                if(!EXTEND_LASTLINE)
+                    linetext[col] = frpParseString(lyric,cursor,maxlen,",\r\n");
+                if(linetext[col].len == 0){
+                    frpWarringMessage(lyric,*cursor,maxlen,"Name should not be empty.Skip line.");
+                    goto skip_line;
+                }
+                newname = linetext[col];
+                break;
+            case COL_PROPERTY:
+                if(!EXTEND_LASTLINE)
+                    linetext[col] = frpParseString(lyric,cursor,maxlen,",\r\n");
+
+                prop->property_name = linetext[col];//TODO future:change to property_id
+                break;
+            case COL_FUNC:
+                if(!EXTEND_LASTLINE)
+                    linetext[col] = frpParseClosedString(lyric,cursor,maxlen,",\r\n","\r\n");
+                col_func_str = linetext[col];
+                //TODO:check error of expression
+                frpAnimFuncArgInit();
+                frp_flex_textpoolstr = col_func_str;
+                if(frp_bisonparse()){
+                    //failed
+                    frpWarringMessage(lyric,*cursor,maxlen,frp_bison_errormsg);
+                    goto skip_line;
+                }
+                break;
+            case COL_DURING:
+                if(!EXTEND_LASTLINE)
+                    linetext[col] = frpParseClosedString(lyric,cursor,maxlen,",\r\n","\r\n");
+
+                col_during_str = linetext[col];
+                //TODO:check error of expression
+                frp_bison_arg_listcount = 0;
+                frp_flex_textpoolstr = col_during_str;
+                if(frp_bisonparse()){
+                    //failed
+                    frpWarringMessage(lyric,*cursor,maxlen,frp_bison_errormsg);
+                    goto skip_line;
+                }
+                break;
+            case COL_OFFSET:
+                if(!EXTEND_LASTLINE)
+                    lastoffset = frpParseNum(lyric,cursor,maxlen);
+                prop->offset = lastoffset;
+                break;
+            case COL_PLAYTIME:
+                if(!EXTEND_LASTLINE){
+                    frp_str s = frpParseString(lyric,cursor,maxlen,",\r\n");
+                    if(frpstr_rcmp(lyric,s,ANSI2UTF8("Start")) == 0){
+                        lastplaytime = FRAP_PLAYTIME_START;
+                    }else if(frpstr_rcmp(lyric,s,ANSI2UTF8("End"))==0){
+                        lastplaytime = FRAP_PLAYTIME_END;
+                    }else{
+                        frpWarringMessage(lyric,*cursor,maxlen,"Playtime only support [Start] and [End].Skip line.");
+                        goto skip_line;
+                    }
+                }
+                prop->play_time = lastplaytime;
+                break;
+            default:
+                if(!EXTEND_LASTLINE)
+                    frpParseClosedString(lyric,cursor,maxlen,",\r\n","\r\n");
+                break;
+            }
+            if(FRP_READ == ',')
+                FRP_MOVE_NEXT();
+        }
+#undef EXTENT_LASTLINE
+        
+        //read express to pool.
+        frp_bison_task = FRP_BISON_TASK_CALC;
+
+        frpAnimFuncArgInit();
+        frp_flex_textpoolstr = col_func_str;
+        frp_bisonparse();
+        prop->func_exp = frp_bison_result;
+        frp_bison_arg_listcount = 0;
+        frp_flex_textpoolstr = col_during_str;
+        frp_bisonparse();
+        prop->during_exp = frp_bison_result;
+
+        frp_anim_seg_addprop(lyric,&seg->anim,newname,prop);
+
+        continue;
+skip_line:
+        frpfree(prop);
+        SKIP();
+    }
+    return 0;
+#undef WARRING
+#undef NOT_END
+#undef FRP_READ
+#undef FRP_MOVE_NEXT
+}
+
+void frp_anim_prop_free(FRAProp * prop){
+    frp_curveexp_free(prop->func_exp,1);
+    frp_curveexp_free(prop->during_exp,1);
+    frpfree(prop);
+}
+
+//call this to update property id in anim expression
+void frp_anim_parse_express(FRAnim *anim,FRFlyc * flyc,const frp_uint8 * textpool,frp_size maxlen){
+    
+    for(FRALine * line = anim->lines;line;line = line -> next){
+        //ensuore line->prop exist
+        while(line->prop){
+            frp_size pid;
+            for(pid = 0;pid < flyc->value_count;pid++){
+                if(frpstr_cmp(textpool,flyc->value_names[pid],line->prop->property_name) == 0){
+                    break;
+                }
+            }
+            if(pid == flyc->value_count){
+                FRAProp * n = line->prop->next;
+                frpWarringMessage(textpool,line->prop->property_name.beg,maxlen,"Property is not found in [flyc].");
+                frp_anim_prop_free(line->prop);
+                line->prop = n;
+            }else{
+                //line->prop is ok
+                line->prop->property_id = pid;
+                break;
+            }
+        }
+
+        for(FRAProp * prop = line->prop;prop;prop = prop->next){
+            //ensure prop->next exist
+            while(prop->next){
+                frp_size pid;
+                for(pid = 0;pid < flyc->value_count;pid++){
+                    if(frpstr_cmp(textpool,flyc->value_names[pid],prop->next->property_name) == 0){
+                        break;
+                    }
+                }
+                if(pid == flyc->value_count){
+                    FRAProp * n = prop->next->next;
+                    frpWarringMessage(textpool,prop->next->property_name.beg,maxlen,"Property is not found in [flyc].");
+                    frp_anim_prop_free(prop->next);
+                    prop->next = n;
+                }else{
+                    //prop->next is ok
+                    prop->next->property_id = pid;
+                    break;
+                }
+            }
+            if(flyc){
+                frp_curve_exp_progress_property(prop->func_exp,flyc,textpool);
+                frp_curve_exp_progress_property(prop->during_exp,flyc,textpool);
+            }
+
+        }
+    }
+
+    
+}
+
+
+//end of anim seg parser
 void frpinit(){
     const char * DefaultFloatProperty[] = {
         "ColorR","ColorG","ColorB","TransX","TransY","ScaleX","ScaleY",
@@ -928,6 +1306,7 @@ void frpinit(){
             frp_flyc_add_parse_rule(DefaultFloatProperty[i],FRP_FLYC_PTYPE_NUM);
         }
     }
+
 }
 
 
@@ -1021,6 +1400,19 @@ FRPFile * frpopen(const frp_uint8 * lyric,frp_size maxlength,frp_bool no_copy){
 #undef FRP_READ
 #undef FRP_MOVE_NEXT
 
+    //progress [curve] property expression of [flyc]
+    FRPSeg * curveseg = frp_getseg(file,ANSI2UTF8("curve"));
+    FRPSeg * flycseg = frp_getseg(file,ANSI2UTF8("flyc"));
+    FRPSeg * animseg = frp_getseg(file,ANSI2UTF8("anim"));
+    if(curveseg && flycseg){
+        frp_curve_progress_property(&curveseg->curve,&flycseg->flyc,file->textpool);
+    }
+    if(animseg){
+        if(flycseg)
+            frp_anim_parse_express(&animseg->anim,&flycseg->flyc,file->textpool,maxlength);
+        else
+            frp_anim_parse_express(&animseg->anim,NULL,file->textpool,maxlength);
+    }
 
     return file;
 

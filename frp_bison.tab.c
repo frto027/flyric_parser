@@ -77,9 +77,11 @@
 
 #include <stdio.h>
 
+int frp_bison_arg_source;
 frp_size frp_bison_arg_listcount;
 frp_str frp_bison_arg_names[FRCE_MAX_ARG_COUNT];
 FRCurveLine *frp_bison_curves_tobeused;
+const char * frp_bison_arg_names_raw[FRCE_MAX_ARG_COUNT];
 
 const char * frp_bison_errormsg;
 char frp_bison_errormsgbuff[1024];
@@ -219,7 +221,8 @@ FRCExpress * frp_bison_get_mid_expression(const char mid,FRCExpress * a,FRCExpre
 }
 FRCExpress * frp_bison_get_arg_express(const char * argname){
     for(frp_size i = 0;i<frp_bison_arg_listcount;i++){
-        if(frpstr_rcmp(frp_flex_textpool,frp_bison_arg_names[i],ANSI2UTF8(argname)) == 0){
+        if((frp_bison_arg_source == FRP_BISON_ARG_SOURCE_TEXTPOOL && frpstr_rcmp(frp_flex_textpool,frp_bison_arg_names[i],ANSI2UTF8(argname)) == 0)
+            || (frp_bison_arg_source == FRP_BISON_ARG_SOURCE_RAWSTR && frpstr_rrcmp(ANSI2UTF8(frp_bison_arg_names_raw[i]),ANSI2UTF8(argname)) == 0)){
             FRCExpress * r = frpmalloc(sizeof(FRCExpress));
             r->type = FRCE_TYPE_ARGM;
             r->argid = i;
@@ -244,7 +247,8 @@ int frp_bison_exist_express_by_name(const char * fname,frp_size argc){
 }
 int frp_bison_exist_arg_express(const char * argname){
     for(frp_size i = 0;i<frp_bison_arg_listcount;i++){
-        if(frpstr_rcmp(frp_flex_textpool,frp_bison_arg_names[i],ANSI2UTF8(argname)) == 0){
+        if((frp_bison_arg_source == FRP_BISON_ARG_SOURCE_TEXTPOOL && frpstr_rcmp(frp_flex_textpool,frp_bison_arg_names[i],ANSI2UTF8(argname)) == 0)
+            || (frp_bison_arg_source == FRP_BISON_ARG_SOURCE_RAWSTR && frpstr_rrcmp(ANSI2UTF8(frp_bison_arg_names_raw[i]),ANSI2UTF8(argname)) == 0)){
             return 1;
         }
     }
@@ -252,7 +256,7 @@ int frp_bison_exist_arg_express(const char * argname){
 }
 
 
-#line 256 "frp_bison.tab.c" /* yacc.c:339  */
+#line 260 "frp_bison.tab.c" /* yacc.c:339  */
 
 # ifndef YY_NULLPTR
 #  if defined __cplusplus && 201103L <= __cplusplus
@@ -308,7 +312,7 @@ int frp_bisonparse (void);
 
 /* Copy the second part of user declarations.  */
 
-#line 312 "frp_bison.tab.c" /* yacc.c:358  */
+#line 316 "frp_bison.tab.c" /* yacc.c:358  */
 
 #ifdef short
 # undef short
@@ -548,18 +552,18 @@ union yyalloc
 #endif /* !YYCOPY_NEEDED */
 
 /* YYFINAL -- State number of the termination state.  */
-#define YYFINAL  10
+#define YYFINAL  12
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   38
+#define YYLAST   40
 
 /* YYNTOKENS -- Number of terminals.  */
-#define YYNTOKENS  12
+#define YYNTOKENS  14
 /* YYNNTS -- Number of nonterminals.  */
 #define YYNNTS  4
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  14
+#define YYNRULES  15
 /* YYNSTATES -- Number of states.  */
-#define YYNSTATES  26
+#define YYNSTATES  29
 
 /* YYTRANSLATE[YYX] -- Symbol number corresponding to YYX as returned
    by yylex, with out-of-bounds checking.  */
@@ -582,7 +586,7 @@ static const yytype_uint8 yytranslate[] =
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,    12,     2,    13,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
@@ -605,8 +609,8 @@ static const yytype_uint8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint16 yyrline[] =
 {
-       0,   191,   191,   204,   221,   240,   253,   266,   279,   291,
-     305,   317,   337,   358,   389
+       0,   195,   195,   208,   225,   244,   257,   270,   283,   295,
+     309,   321,   341,   362,   393,   416
 };
 #endif
 
@@ -616,7 +620,7 @@ static const yytype_uint16 yyrline[] =
 static const char *const yytname[] =
 {
   "$end", "error", "$undefined", "T_NUM", "T_WORD", "'+'", "'-'", "'*'",
-  "'/'", "','", "'('", "')'", "$accept", "S", "LST", "E", YY_NULLPTR
+  "'/'", "','", "'('", "')'", "'['", "']'", "$accept", "S", "LST", "E", YY_NULLPTR
 };
 #endif
 
@@ -626,7 +630,7 @@ static const char *const yytname[] =
 static const yytype_uint16 yytoknum[] =
 {
        0,   256,   257,   258,   259,    43,    45,    42,    47,    44,
-      40,    41
+      40,    41,    91,    93
 };
 # endif
 
@@ -644,9 +648,9 @@ static const yytype_uint16 yytoknum[] =
      STATE-NUM.  */
 static const yytype_int8 yypact[] =
 {
-      21,    -7,    -5,    21,    21,    10,     1,    12,    -6,    27,
-      -7,    21,    21,    21,    21,    -7,     8,     1,    -7,    -6,
-      -6,    -7,    -7,    21,    -7,    -7
+      24,    -7,    -5,    24,    24,     6,    11,    32,    14,    -6,
+       1,     9,    -7,    24,    24,    24,    24,    -7,    10,    32,
+      -7,    -7,    -6,    -6,    -7,    -7,    24,    -7,    -7
 };
 
   /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
@@ -654,9 +658,9 @@ static const yytype_int8 yypact[] =
      means the default is an error.  */
 static const yytype_uint8 yydefact[] =
 {
-       0,     9,    14,     0,     0,     0,     2,     0,    11,     0,
-       1,     0,     0,     0,     0,    12,     0,     4,    10,     5,
-       6,     7,     8,     0,    13,     3
+       0,     9,    15,     0,     0,     0,     0,     2,     0,    11,
+       0,     0,     1,     0,     0,     0,     0,    12,     0,     4,
+      10,    14,     5,     6,     7,     8,     0,    13,     3
 };
 
   /* YYPGOTO[NTERM-NUM].  */
@@ -668,7 +672,7 @@ static const yytype_int8 yypgoto[] =
   /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int8 yydefgoto[] =
 {
-      -1,     5,    16,    17
+      -1,     6,    18,    19
 };
 
   /* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
@@ -676,41 +680,43 @@ static const yytype_int8 yydefgoto[] =
      number is the opposite.  If YYTABLE_NINF, syntax error.  */
 static const yytype_uint8 yytable[] =
 {
-       6,    13,    14,     8,     9,     7,    11,    12,    13,    14,
-      10,    19,    20,    21,    22,     1,     2,    23,     3,    24,
-      25,     0,     4,    15,     1,     2,     0,     3,     0,     0,
-       0,     4,    11,    12,    13,    14,     0,     0,    18
+       7,    15,    16,     9,    10,     8,    13,    14,    15,    16,
+      11,    12,    20,    22,    23,    24,    25,     1,     2,    26,
+       3,    27,    21,    28,     4,    17,     5,     1,     2,     0,
+       3,     0,     0,     0,     4,     0,     5,    13,    14,    15,
+      16
 };
 
 static const yytype_int8 yycheck[] =
 {
        0,     7,     8,     3,     4,    10,     5,     6,     7,     8,
-       0,    11,    12,    13,    14,     3,     4,     9,     6,    11,
-      23,    -1,    10,    11,     3,     4,    -1,     6,    -1,    -1,
-      -1,    10,     5,     6,     7,     8,    -1,    -1,    11
+       4,     0,    11,    13,    14,    15,    16,     3,     4,     9,
+       6,    11,    13,    26,    10,    11,    12,     3,     4,    -1,
+       6,    -1,    -1,    -1,    10,    -1,    12,     5,     6,     7,
+       8
 };
 
   /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
      symbol of state STATE-NUM.  */
 static const yytype_uint8 yystos[] =
 {
-       0,     3,     4,     6,    10,    13,    15,    10,    15,    15,
-       0,     5,     6,     7,     8,    11,    14,    15,    11,    15,
-      15,    15,    15,     9,    11,    14
+       0,     3,     4,     6,    10,    12,    15,    17,    10,    17,
+      17,     4,     0,     5,     6,     7,     8,    11,    16,    17,
+      11,    13,    17,    17,    17,    17,     9,    11,    16
 };
 
   /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
 static const yytype_uint8 yyr1[] =
 {
-       0,    12,    13,    14,    14,    15,    15,    15,    15,    15,
-      15,    15,    15,    15,    15
+       0,    14,    15,    16,    16,    17,    17,    17,    17,    17,
+      17,    17,    17,    17,    17,    17
 };
 
   /* YYR2[YYN] -- Number of symbols on the right hand side of rule YYN.  */
 static const yytype_uint8 yyr2[] =
 {
        0,     2,     1,     3,     1,     3,     3,     3,     3,     1,
-       3,     2,     3,     4,     1
+       3,     2,     3,     4,     3,     1
 };
 
 
@@ -1388,7 +1394,7 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 191 "frp_bison.y" /* yacc.c:1648  */
+#line 195 "frp_bison.y" /* yacc.c:1648  */
     {
     switch(frp_bison_task){
     case FRP_BISON_TASK_PRINT:
@@ -1400,11 +1406,11 @@ yyreduce:
     }
     YYACCEPT;
 }
-#line 1404 "frp_bison.tab.c" /* yacc.c:1648  */
+#line 1410 "frp_bison.tab.c" /* yacc.c:1648  */
     break;
 
   case 3:
-#line 204 "frp_bison.y" /* yacc.c:1648  */
+#line 208 "frp_bison.y" /* yacc.c:1648  */
     {
     switch(frp_bison_task){
     case FRP_BISON_TASK_PRINT:
@@ -1422,11 +1428,11 @@ yyreduce:
         break;
     }
 }
-#line 1426 "frp_bison.tab.c" /* yacc.c:1648  */
+#line 1432 "frp_bison.tab.c" /* yacc.c:1648  */
     break;
 
   case 4:
-#line 221 "frp_bison.y" /* yacc.c:1648  */
+#line 225 "frp_bison.y" /* yacc.c:1648  */
     {
     switch(frp_bison_task){
     case FRP_BISON_TASK_PRINT:
@@ -1444,11 +1450,11 @@ yyreduce:
         break;
     }
 }
-#line 1448 "frp_bison.tab.c" /* yacc.c:1648  */
+#line 1454 "frp_bison.tab.c" /* yacc.c:1648  */
     break;
 
   case 5:
-#line 240 "frp_bison.y" /* yacc.c:1648  */
+#line 244 "frp_bison.y" /* yacc.c:1648  */
     {
     switch(frp_bison_task){
     case FRP_BISON_TASK_PRINT:
@@ -1462,11 +1468,11 @@ yyreduce:
         break;
     }
 }
-#line 1466 "frp_bison.tab.c" /* yacc.c:1648  */
+#line 1472 "frp_bison.tab.c" /* yacc.c:1648  */
     break;
 
   case 6:
-#line 253 "frp_bison.y" /* yacc.c:1648  */
+#line 257 "frp_bison.y" /* yacc.c:1648  */
     {
     switch(frp_bison_task){
     case FRP_BISON_TASK_PRINT:
@@ -1480,11 +1486,11 @@ yyreduce:
         break;
     }
  }
-#line 1484 "frp_bison.tab.c" /* yacc.c:1648  */
+#line 1490 "frp_bison.tab.c" /* yacc.c:1648  */
     break;
 
   case 7:
-#line 266 "frp_bison.y" /* yacc.c:1648  */
+#line 270 "frp_bison.y" /* yacc.c:1648  */
     {
     switch(frp_bison_task){
     case FRP_BISON_TASK_PRINT:
@@ -1498,11 +1504,11 @@ yyreduce:
         break;
     }
 }
-#line 1502 "frp_bison.tab.c" /* yacc.c:1648  */
+#line 1508 "frp_bison.tab.c" /* yacc.c:1648  */
     break;
 
   case 8:
-#line 279 "frp_bison.y" /* yacc.c:1648  */
+#line 283 "frp_bison.y" /* yacc.c:1648  */
     {
     switch(frp_bison_task){
     case FRP_BISON_TASK_PRINT:
@@ -1515,11 +1521,11 @@ yyreduce:
         break;
     }
 }
-#line 1519 "frp_bison.tab.c" /* yacc.c:1648  */
+#line 1525 "frp_bison.tab.c" /* yacc.c:1648  */
     break;
 
   case 9:
-#line 291 "frp_bison.y" /* yacc.c:1648  */
+#line 295 "frp_bison.y" /* yacc.c:1648  */
     {
     switch(frp_bison_task){
     case FRP_BISON_TASK_PRINT:
@@ -1534,11 +1540,11 @@ yyreduce:
         break;
     }
 }
-#line 1538 "frp_bison.tab.c" /* yacc.c:1648  */
+#line 1544 "frp_bison.tab.c" /* yacc.c:1648  */
     break;
 
   case 10:
-#line 305 "frp_bison.y" /* yacc.c:1648  */
+#line 309 "frp_bison.y" /* yacc.c:1648  */
     {
     switch(frp_bison_task){
     case FRP_BISON_TASK_PRINT:
@@ -1551,11 +1557,11 @@ yyreduce:
         break;
     }
  }
-#line 1555 "frp_bison.tab.c" /* yacc.c:1648  */
+#line 1561 "frp_bison.tab.c" /* yacc.c:1648  */
     break;
 
   case 11:
-#line 317 "frp_bison.y" /* yacc.c:1648  */
+#line 321 "frp_bison.y" /* yacc.c:1648  */
     {
     switch(frp_bison_task){
     case FRP_BISON_TASK_PRINT:
@@ -1576,11 +1582,11 @@ yyreduce:
         break;
     }
 }
-#line 1580 "frp_bison.tab.c" /* yacc.c:1648  */
+#line 1586 "frp_bison.tab.c" /* yacc.c:1648  */
     break;
 
   case 12:
-#line 337 "frp_bison.y" /* yacc.c:1648  */
+#line 341 "frp_bison.y" /* yacc.c:1648  */
     {
 
     switch(frp_bison_task){
@@ -1602,11 +1608,11 @@ yyreduce:
         }
         break;
     }
-#line 1606 "frp_bison.tab.c" /* yacc.c:1648  */
+#line 1612 "frp_bison.tab.c" /* yacc.c:1648  */
     break;
 
   case 13:
-#line 358 "frp_bison.y" /* yacc.c:1648  */
+#line 362 "frp_bison.y" /* yacc.c:1648  */
     {
     switch(frp_bison_task){
     case FRP_BISON_TASK_PRINT:
@@ -1638,11 +1644,39 @@ yyreduce:
         break;
     }
 }
-#line 1642 "frp_bison.tab.c" /* yacc.c:1648  */
+#line 1648 "frp_bison.tab.c" /* yacc.c:1648  */
     break;
 
   case 14:
-#line 389 "frp_bison.y" /* yacc.c:1648  */
+#line 393 "frp_bison.y" /* yacc.c:1648  */
+    { //property name here
+    //TOTEST
+    switch(frp_bison_task){
+    case FRP_BISON_TASK_PRINT:
+        printf("[prop]");
+        frpfree((yyvsp[-1]).temptext);
+        break;
+    case FRP_BISON_TASK_CHECK:
+        frpfree((yyvsp[-1]).temptext);
+        break;
+    case FRP_BISON_TASK_CALC:
+    {
+        frp_size len = 0;
+        while((yyvsp[-1]).temptext[len++]);
+        (yyval).express = frpmalloc(sizeof(FRCExpress));
+        (yyval).express->type = FRCE_TYPE_PROPERTY_NAME;
+        (yyval).express->propname = frpmalloc(sizeof(frp_uint8) * len);
+        while(len--)
+            (yyval).express->propname[len] = (yyvsp[-1]).temptext[len];
+    }
+        break;
+    }
+}
+#line 1676 "frp_bison.tab.c" /* yacc.c:1648  */
+    break;
+
+  case 15:
+#line 416 "frp_bison.y" /* yacc.c:1648  */
     {
     switch(frp_bison_task){
     case FRP_BISON_TASK_PRINT:
@@ -1663,11 +1697,11 @@ yyreduce:
         break;
     }
 }
-#line 1667 "frp_bison.tab.c" /* yacc.c:1648  */
+#line 1701 "frp_bison.tab.c" /* yacc.c:1648  */
     break;
 
 
-#line 1671 "frp_bison.tab.c" /* yacc.c:1648  */
+#line 1705 "frp_bison.tab.c" /* yacc.c:1648  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -1895,7 +1929,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 410 "frp_bison.y" /* yacc.c:1907  */
+#line 437 "frp_bison.y" /* yacc.c:1907  */
 
 
 

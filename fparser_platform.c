@@ -1,5 +1,5 @@
+#include "fparser.h"
 #include "fparser_platform.h"
-
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -76,3 +76,18 @@ FRCBuiltinFunctionType FRCBuiltinFunctions[] = {
     {"sin",frp_sin,1},
     {NULL,NULL,0}
 };
+
+void frpAnimFuncArgInit(){
+    frp_bison_arg_listcount = 3;
+    frp_bison_arg_names_raw[0] = "x";
+    frp_bison_arg_names_raw[1] = "t";
+    frp_bison_arg_names_raw[2] = "d";
+}
+void frpAnimFuncArgCalc(float * arg){
+    //TODO
+    //no context so i can't write it
+
+    arg[1] = 1;
+    arg[2] = 4;
+    arg[0] = arg[1] / arg[2];
+}

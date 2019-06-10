@@ -20,10 +20,6 @@ extern char FRP_support_seg_names[][30];
 //#define FRPVALUE_TYPE_EXP   4 //表达式
 #define FRPVALUE_TYPE_TIM   5 //时间 frp_time
 
-struct FRPExpContext{//计算表达式的上下文
-    frp_time time;
-};
-
 typedef struct FRPValue{
     int type;
     union{
@@ -53,26 +49,14 @@ typedef struct FRFlyc{
 }FRFlyc;
 // end of lyric line elements
 
-// begin of animation define elements
-typedef struct FRAProp{
-    frp_str name;
-    FRPValue * value;
-    struct FRAProp * next;
-}FRAProp;
-typedef struct FRALine{
-    frp_str name;
-    FRAProp * prop;
-    struct FRALine * next;
-}FRALine;
-typedef struct FRAnim{//property is solid
-    FRALine * child;//linked list
-} FRAnim;
-// end of animation define elements
+
 // begin of curve define elements
 #define FRCE_TYPE_CONST 1
 #define FRCE_TYPE_FUNC  2
 #define FRCE_TYPE_ARGM  3
+#define FRCE_TYPE_PROPERTY 4//读取属性值
 #define FRCE_TYPE_CURVE 5
+#define FRCE_TYPE_PROPERTY_NAME 6
 
 
 #define FRCE_MAX_ARG_COUNT 10
@@ -94,6 +78,11 @@ typedef struct FRCExpress{
             struct FRCurveLine * curveline;
             struct FRCExpress *argv;
         }curveexp;
+        union{
+            //property name.use this after bison perser.replace with propid before calculate expression
+            frp_uint8 * propname;
+            frp_size propid;//property id of curve.
+        };
     };
 }FRCExpress;
 
@@ -109,6 +98,29 @@ typedef struct FRCurve{
 }FRCurve;
 
 // end of curve define elements
+// begin of animation define elements
+#define FRAP_PLAYTIME_START 0
+#define FRAP_PLAYTIME_END 1
+typedef struct FRAProp{
+    union{
+        frp_str property_name;//after parse segment
+        frp_size property_id;//after parse all file(id of flyc segment property)
+    };
+    FRCExpress * func_exp;//argc = 3 (x,t,d)
+    FRCExpress * during_exp;//argc = 0
+    float offset;
+    int play_time;//FRAP_PLAYTIME
+    struct FRAProp * next;
+}FRAProp;
+typedef struct FRALine{
+    frp_str name;
+    FRAProp * prop;
+    struct FRALine * next;
+}FRALine;
+typedef struct FRAnim{//property is solid
+    FRALine * lines;//linked list
+} FRAnim;
+// end of animation define elements
 
 typedef struct FRPSeg{
     frp_str segname;
@@ -163,10 +175,15 @@ extern void frp_flyc_add_parse_rule(const char *name,int frp_flyc_ptype);
 
 //variables for flex
 
+#define FRP_BISON_ARG_SOURCE_TEXTPOOL 0
+#define FRP_BISON_ARG_SOURCE_RAWSTR 1
+
 extern const frp_uint8 * frp_flex_textpool;
 extern frp_str frp_flex_textpoolstr;
+extern int frp_bison_arg_source;
 extern frp_size frp_bison_arg_listcount;
-extern frp_str frp_bison_arg_names[FRCE_MAX_ARG_COUNT];
+extern frp_str frp_bison_arg_names[FRCE_MAX_ARG_COUNT];//TEXTPOOL
+extern const char * frp_bison_arg_names_raw[FRCE_MAX_ARG_COUNT];//RAWSTR
 //function for flex,debug only
 //extern int frp_yyflex(void);
 extern int frp_bisonparse(void);
@@ -188,6 +205,5 @@ typedef union frp_bison_type{
     char * temptext;
 }frp_bison_type;
 #define YYSTYPE frp_bison_type
-
 
 #endif

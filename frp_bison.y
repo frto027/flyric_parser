@@ -4,9 +4,11 @@
 
 #include <stdio.h>
 
+int frp_bison_arg_source;
 frp_size frp_bison_arg_listcount;
 frp_str frp_bison_arg_names[FRCE_MAX_ARG_COUNT];
 FRCurveLine *frp_bison_curves_tobeused;
+const char * frp_bison_arg_names_raw[FRCE_MAX_ARG_COUNT];
 
 const char * frp_bison_errormsg;
 char frp_bison_errormsgbuff[1024];
@@ -146,7 +148,8 @@ FRCExpress * frp_bison_get_mid_expression(const char mid,FRCExpress * a,FRCExpre
 }
 FRCExpress * frp_bison_get_arg_express(const char * argname){
     for(frp_size i = 0;i<frp_bison_arg_listcount;i++){
-        if(frpstr_rcmp(frp_flex_textpool,frp_bison_arg_names[i],ANSI2UTF8(argname)) == 0){
+        if((frp_bison_arg_source == FRP_BISON_ARG_SOURCE_TEXTPOOL && frpstr_rcmp(frp_flex_textpool,frp_bison_arg_names[i],ANSI2UTF8(argname)) == 0)
+            || (frp_bison_arg_source == FRP_BISON_ARG_SOURCE_RAWSTR && frpstr_rrcmp(ANSI2UTF8(frp_bison_arg_names_raw[i]),ANSI2UTF8(argname)) == 0)){
             FRCExpress * r = frpmalloc(sizeof(FRCExpress));
             r->type = FRCE_TYPE_ARGM;
             r->argid = i;
@@ -171,7 +174,8 @@ int frp_bison_exist_express_by_name(const char * fname,frp_size argc){
 }
 int frp_bison_exist_arg_express(const char * argname){
     for(frp_size i = 0;i<frp_bison_arg_listcount;i++){
-        if(frpstr_rcmp(frp_flex_textpool,frp_bison_arg_names[i],ANSI2UTF8(argname)) == 0){
+        if((frp_bison_arg_source == FRP_BISON_ARG_SOURCE_TEXTPOOL && frpstr_rcmp(frp_flex_textpool,frp_bison_arg_names[i],ANSI2UTF8(argname)) == 0)
+            || (frp_bison_arg_source == FRP_BISON_ARG_SOURCE_RAWSTR && frpstr_rrcmp(ANSI2UTF8(frp_bison_arg_names_raw[i]),ANSI2UTF8(argname)) == 0)){
             return 1;
         }
     }
@@ -383,6 +387,29 @@ E   :   E '+' E         {
         $$.express = frp_bison_get_express_by_name($1.temptext,exps,len);
         frpfree($1.temptext);
         }
+        break;
+    }
+}
+    |   '[' T_WORD ']' { //property name here
+    //TOTEST
+    switch(frp_bison_task){
+    case FRP_BISON_TASK_PRINT:
+        printf("[prop]");
+        frpfree($2.temptext);
+        break;
+    case FRP_BISON_TASK_CHECK:
+        frpfree($2.temptext);
+        break;
+    case FRP_BISON_TASK_CALC:
+    {
+        frp_size len = 0;
+        while($2.temptext[len++]);
+        $$.express = frpmalloc(sizeof(FRCExpress));
+        $$.express->type = FRCE_TYPE_PROPERTY_NAME;
+        $$.express->propname = frpmalloc(sizeof(frp_uint8) * len);
+        while(len--)
+            $$.express->propname[len] = $2.temptext[len];
+    }
         break;
     }
 }
