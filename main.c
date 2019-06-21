@@ -14,20 +14,21 @@ void printString(frp_str str){
 void printFlycPValue(FRPValue * value){
     switch (value->type) {
     case FRPVALUE_TYPE_EXT:
-        printf("ext expression");
+        printf("ext");
         break;
     case FRPVALUE_TYPE_INT:
-        printf("int expression = %d",value->integer);
+        printf("int[%d]",value->integer);
         break;
     case FRPVALUE_TYPE_NUM:
-        printf("num expression = %f",value->num);
+        printf("num[%f]",value->num);
         break;
     case FRPVALUE_TYPE_STR:
-        printf("str expression = ");
+        printf("str[");
         printString(value->str);
+        printf("]");
         break;
     case FRPVALUE_TYPE_TIM:
-        printf("time expression = %lld",value->time);
+        printf("time[%lld]",value->time);
         break;
     }
 }
@@ -36,12 +37,12 @@ void printFlycNode(FRPNode * node,FRPLine * line){
         printf("--->empty node\n");
     else{
         for(unsigned int i=0;i<line->seg->flyc.value_count;i++){
-            printf("--->");
+            printf("|");
             printString(line->seg->flyc.value_names[i]);
             printf(":");
             printFlycPValue(node->values + i);
-            printf("\n");
         }
+        printf("\n");
         printFlycNode(node->next,line);
     }
 }
@@ -49,13 +50,15 @@ void printFlycLine(FRPLine *line){
     if(line == NULL)
         printf("-->empty line\n");
     else{
+        printf("line,beg = %llu,end = %llu\n",line->starttime,line->endtime);
         for(unsigned int i=0;i<line->seg->flyc.value_count;i++){
-            printf("-->");
+            printf("|");
             printString(line->seg->flyc.value_names[i]);
             printf(":");
             printFlycPValue(line->values + i);
-            printf("\n");
+
         }
+        printf("\n");
         printf("-->node:\n");
         printFlycNode(line->node,line);
         printFlycLine(line->next);
@@ -93,6 +96,7 @@ int main(int argc,char **argv)
     fread(buff,sizeof(frp_uint8),4096,f);
 
     frpinit();
+    frp_anim_add_support("ColorR");
     printf("ready to parse.\n");
     FRPFile * file = frpopen(buff,4096,1);
     printf("parse over.\n");
@@ -101,7 +105,8 @@ int main(int argc,char **argv)
     long long tick = 0;
 
     if(file){
-        //printFile(file);
+        printFile(file);
+
         FRPSeg * seg = NULL;
         for(int i=0;i<file->segcount;i++){
             if(frpstr_rcmp(file->textpool,file->segs[i].segname,"curve") == 0){

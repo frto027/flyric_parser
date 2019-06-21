@@ -3,6 +3,9 @@
 #include "fparser.h"
 #include "frp_bison.tab.h"
 
+#define YY_NO_UNPUT
+#define YY_NO_INPUT
+
 const frp_uint8 * frp_flex_textpool;
 frp_str frp_flex_textpoolstr;
 

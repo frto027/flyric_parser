@@ -19,19 +19,23 @@ extern char FRP_support_seg_names[][30];
 #define FRPVALUE_TYPE_NUM   3 //实数
 //#define FRPVALUE_TYPE_EXP   4 //表达式
 #define FRPVALUE_TYPE_TIM   5 //时间 frp_time
-
+struct FRLanim;
 typedef struct FRPValue{
     int type;
     union{
         frp_str str;
         int integer;
-        float num;
+        struct{
+            float num;
+            struct FRLanim * anim_apply;//todo,play this.
+        };
         frp_time time;
     };
 }FRPValue;
 // begin of lyric line elements
 typedef struct FRPNode{
     FRPValue * values;
+    frp_time starttime,endtime;
     struct FRPNode * next;
 }FRPNode;
 
@@ -41,6 +45,7 @@ typedef struct FRPLine{
     FRPValue * values;
     struct FRPSeg * seg;
     struct FRPLine *next;
+    frp_time starttime,endtime;
 }FRPLine;
 typedef struct FRFlyc{
     FRPLine * lines;
@@ -108,8 +113,8 @@ typedef struct FRAProp{
     };
     FRCExpress * func_exp;//argc = 3 (x,t,d)
     FRCExpress * during_exp;//argc = 0
-    float offset;
-    int play_time;//FRAP_PLAYTIME
+    FRCExpress * offset_exp;
+    //int play_time;//FRAP_PLAYTIME
     struct FRAProp * next;
 }FRAProp;
 typedef struct FRALine{
@@ -121,6 +126,14 @@ typedef struct FRAnim{//property is solid
     FRALine * lines;//linked list
 } FRAnim;
 // end of animation define elements
+
+//begin of playing elements
+//记录某个属性上应用的动画信息
+typedef struct FRLanim{
+    frp_time starttime,endtime;
+    FRAProp * animprop;//这个不归当前元素释放
+    struct FRLanim * next;
+}FRLanim;
 
 typedef struct FRPSeg{
     frp_str segname;
@@ -159,6 +172,8 @@ extern FRPSeg * frp_getseg(FRPFile * file,const frp_uint8 * name);
 
 extern void frpinit(void);
 
+extern void frp_anim_add_support(const frp_uint8 * property);
+
 extern FRPFile * frpopen(const frp_uint8 * lyric,frp_size maxlength,frp_bool no_copy);
 extern void frpdestroy(FRPFile * file);
 //增加某一属性的处理方式
@@ -172,6 +187,7 @@ extern void frpdestroy(FRPFile * file);
 #define FRP_FLYC_PTYPE_INT      5 //整数
 
 extern void frp_flyc_add_parse_rule(const char *name,int frp_flyc_ptype);
+
 
 //variables for flex
 

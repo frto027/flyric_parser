@@ -708,6 +708,9 @@ char *yytext;
 #include "fparser.h"
 #include "frp_bison.tab.h"
 
+#define YY_NO_UNPUT
+#define YY_NO_INPUT
+
 const frp_uint8 * frp_flex_textpool;
 frp_str frp_flex_textpoolstr;
 
@@ -726,8 +729,8 @@ frp_str frp_flex_textpoolstr;
         result = sz ? sz : YY_NULL;\
     }
 */
-#line 729 "lex.frp_bison.c"
-#line 730 "lex.frp_bison.c"
+#line 732 "lex.frp_bison.c"
+#line 733 "lex.frp_bison.c"
 
 #define INITIAL 0
 
@@ -944,9 +947,9 @@ YY_DECL
 		}
 
 	{
-#line 29 "frp_flex.l"
+#line 32 "frp_flex.l"
 
-#line 949 "lex.frp_bison.c"
+#line 952 "lex.frp_bison.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1005,7 +1008,7 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 30 "frp_flex.l"
+#line 33 "frp_flex.l"
 {
     //printf("[%c]",*yytext);
     return *yytext;
@@ -1013,7 +1016,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 34 "frp_flex.l"
+#line 37 "frp_flex.l"
 {
     //printf("[int:%s]",yytext);
     int beg = 0;
@@ -1034,14 +1037,14 @@ YY_RULE_SETUP
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 51 "frp_flex.l"
+#line 54 "frp_flex.l"
 {
     /* ignore */
 }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 54 "frp_flex.l"
+#line 57 "frp_flex.l"
 {
     //printf("[word:%s]",yytext);
     frp_size len = 0;
@@ -1056,10 +1059,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 65 "frp_flex.l"
+#line 68 "frp_flex.l"
 ECHO;
 	YY_BREAK
-#line 1062 "lex.frp_bison.c"
+#line 1065 "lex.frp_bison.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -2064,7 +2067,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 65 "frp_flex.l"
+#line 68 "frp_flex.l"
 
 
 //int frp_yy_eos;
