@@ -21,6 +21,9 @@ void printFlycPValue(FRPValue * value){
         break;
     case FRPVALUE_TYPE_NUM:
         printf("num[%f]",value->num);
+        for(FRLanim * anim = value->anim_apply;anim;anim = anim->next){
+            printf("-[%d~%lld->%lld]",anim->animprop->property_id,anim->starttime,anim->endtime);
+        }
         break;
     case FRPVALUE_TYPE_STR:
         printf("str[");
@@ -98,7 +101,7 @@ int main(int argc,char **argv)
     frpinit();
     frp_anim_add_support("ColorR");
     printf("ready to parse.\n");
-    FRPFile * file = frpopen(buff,4096,1);
+    FRPFile * file = frpopen(buff,sizeof(buff),1);
     printf("parse over.\n");
 
     time_t begtim = time(NULL);

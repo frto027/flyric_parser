@@ -529,13 +529,19 @@ int flyc_seg_parser(PARSE_SEG_ARGS){
         //index_map[prop_count] = flyc_get_prop_index(lyric,flyc,frpParseString(lyric,cursor,maxlen,",\r\n"));
         ptype_map[flyc->value_count] = flyc_get_parse_rule(lyric,flyc->value_names[flyc->value_count]);
         flyc->value_count++;
-        FRP_MOVE_NEXT();
+        if(!frp_in_str(FRP_READ ,"\r\n"))
+            FRP_MOVE_NEXT();
     }
-    if(FRP_READ == ','){
+    if(NOT_END && !frp_in_str(FRP_READ ,"\r\n")){
         WARRING("ignore segment properties after this variable.");
-        while(NOT_END && frp_in_str(FRP_READ ,"\r\n"))
+        while(NOT_END && !frp_in_str(FRP_READ ,"\r\n"))
             (*cursor)++;
     }
+    if(FRP_READ == '\r')
+        (*cursor)++;
+    if(FRP_READ == '\n')
+        (*cursor)++;
+
     //特殊的几列id
     frp_size prop_type_id = frp_flyc_get_prop_index_rstr(lyric,flyc,ANSI2UTF8("Type"));
     frp_size prop_type_starttime = frp_flyc_get_prop_index_rstr(lyric,flyc,ANSI2UTF8("StartTime"));
