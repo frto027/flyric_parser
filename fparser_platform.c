@@ -84,10 +84,13 @@ void frpAnimFuncArgInit(){
     frp_bison_arg_names_raw[2] = "d";
 }
 void frpAnimFuncArgCalc(float * arg){
+    //please refer to fparser.c
+    /*
     //TODO
     //no context so i can't write it
 
     arg[1] = 1;
     arg[2] = 4;
     arg[0] = arg[1] / arg[2];
+    */
 }

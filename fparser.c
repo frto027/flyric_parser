@@ -1376,6 +1376,44 @@ void frp_anim_seg_free(FRPSeg * seg){
 
 //end of anim seg parser
 
+//begin of frp play
+//获得属性id
+frp_size frp_play_get_property_id(FRPFile* file,const frp_uint8 *property_name){
+    FRPSeg * seg = frp_getseg(file,ANSI2UTF8("flyc"));
+    if(seg){
+        frp_size r = frp_flyc_get_prop_index_rstr(file->textpool,&seg->flyc,property_name);
+        if(r == FRP_MAX_SEGMENT_PROPERTY_COUNT)
+            goto ERROR_NOT_FOUND;
+        return r;
+    }
+
+ERROR_NOT_FOUND:
+    //ERROR:no property
+    return FRP_MAX_SEGMENT_PROPERTY_COUNT;
+}
+//计算浮点属性值
+float frp_play_property_float_value(frp_time time, FRPValue * values,frp_size property_id){
+    float arg[FRCE_MAX_ARG_COUNT];
+    //default value for unknown property
+    if(property_id == FRP_MAX_SEGMENT_PROPERTY_COUNT)
+        return 0;
+    FRPValue * target = values + property_id;
+    if(target->type != FRPVALUE_TYPE_NUM)
+        return 0;
+    for(FRLanim * anim = target->anim_apply;anim;anim = anim->next){
+        if(anim->starttime <= time && anim->endtime >time){
+            //frpAnimFuncArgCalc(arg);
+            arg[1] = time - anim->starttime;
+            arg[2] = anim->endtime - anim->starttime;
+            arg[0] = arg[1] / arg[2];
+            return frp_curve_expresult_calculate(anim->animprop->func_exp,arg,values);
+        }
+    }
+    return target->num;
+}
+
+//end of frp play
+
 //begin of FRL parser(load lyric and calcupate property)
 void frp_init_anim_and_times(FRFlyc * flyc,FRAnim * anim,const frp_uint8 * textpool){
     //ALDO:把所有的lines时间和node时间处理好，value里面的动画设置好
@@ -1649,3 +1687,4 @@ void frpdestroy(FRPFile * file){
         frpfree(file);
     }
 }
+

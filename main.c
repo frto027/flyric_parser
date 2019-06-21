@@ -111,7 +111,7 @@ int main(int argc,char **argv)
         printFile(file);
 
         FRPSeg * seg = NULL;
-        for(int i=0;i<file->segcount;i++){
+        for(frp_size i=0;i<file->segcount;i++){
             if(frpstr_rcmp(file->textpool,file->segs[i].segname,"curve") == 0){
                 seg = file->segs + i;
             }
@@ -135,10 +135,24 @@ int main(int argc,char **argv)
                     line = line->next;
                 }
             }
-            printf("calculate %lld in %d sec.",tick,PERFORMANCE_COUNT_SEC);
+            printf("calculate %lld in %d sec.\n",tick,PERFORMANCE_COUNT_SEC);
         }else{
             printf("no curve segment found.\n");
         }
+
+        //debug color r property
+
+        frp_time time = 0;
+        frp_size color_r_property_id = frp_play_get_property_id(file,"ColorR");
+        //hack for the seconed line's first node's values
+        FRPValue * vals = frp_getseg(file,"flyc")->flyc.lines->next->node->values;
+        for(time = 2000;time < 3000;time += 50){
+            float value = frp_play_property_float_value(time,vals,color_r_property_id);
+            printf("[%6llu:%3.5f]\n",time,value);
+        }
+
+
+
     }else {
         printf("file is not open.");
     }

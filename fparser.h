@@ -188,6 +188,11 @@ extern void frpdestroy(FRPFile * file);
 
 extern void frp_flyc_add_parse_rule(const char *name,int frp_flyc_ptype);
 
+//获得属性id
+extern frp_size frp_play_get_property_id(FRPFile* file,const frp_uint8 *property_name);
+//计算浮点属性值
+extern float frp_play_property_float_value(frp_time time, FRPValue * values,frp_size property_id);
+
 
 //variables for flex
 
