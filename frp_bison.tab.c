@@ -613,7 +613,7 @@ static const yytype_uint8 yytranslate[] =
 static const yytype_uint16 yyrline[] =
 {
        0,   200,   200,   213,   230,   249,   262,   275,   288,   300,
-     314,   326,   346,   367,   398,   421
+     314,   326,   346,   367,   398,   423
 };
 #endif
 
@@ -1679,18 +1679,20 @@ yyreduce:
         while((yyvsp[-1]).temptext[len++]);
         (yyval).express = frpmalloc(sizeof(FRCExpress));
         (yyval).express->type = FRCE_TYPE_PROPERTY_NAME;
-        (yyval).express->propname = frpmalloc(sizeof(frp_uint8) * len);
-        while(len--)
-            (yyval).express->propname[len] = (yyvsp[-1]).temptext[len];
+        (yyval).express->propname = (yyvsp[-1]).temptext;
+        //$$.express->propname = frpmalloc(sizeof(frp_uint8) * len);
+        //while(len--)
+        //    $$.express->propname[len] = $2.temptext[len];
+        //frpfree($2.temptext);
     }
         break;
     }
 }
-#line 1690 "frp_bison.tab.c" /* yacc.c:1648  */
+#line 1692 "frp_bison.tab.c" /* yacc.c:1648  */
     break;
 
   case 15:
-#line 421 "frp_bison.y" /* yacc.c:1648  */
+#line 423 "frp_bison.y" /* yacc.c:1648  */
     {
     switch(frp_bison_task){
     case FRP_BISON_TASK_PRINT:
@@ -1711,11 +1713,11 @@ yyreduce:
         break;
     }
 }
-#line 1715 "frp_bison.tab.c" /* yacc.c:1648  */
+#line 1717 "frp_bison.tab.c" /* yacc.c:1648  */
     break;
 
 
-#line 1719 "frp_bison.tab.c" /* yacc.c:1648  */
+#line 1721 "frp_bison.tab.c" /* yacc.c:1648  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -1943,7 +1945,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 442 "frp_bison.y" /* yacc.c:1907  */
+#line 444 "frp_bison.y" /* yacc.c:1907  */
 
 
 

@@ -831,9 +831,9 @@ void frp_curve_exp_progress_property(FRCExpress * exp,FRFlyc * flyc,const frp_ui
         }
         if(i == flyc->value_count){
             frpWarringCompileMessage(exp->propname,(frp_size)(-1),0,"property not found in [flyc] segment.");
+            frpfree(exp->propname);
             exp->type = FRCE_TYPE_CONST;
             exp->con = 0;
-            frpfree(exp->propname);
             //property name not found.
         }
     }

@@ -411,9 +411,11 @@ E   :   E '+' E         {
         while($2.temptext[len++]);
         $$.express = frpmalloc(sizeof(FRCExpress));
         $$.express->type = FRCE_TYPE_PROPERTY_NAME;
-        $$.express->propname = frpmalloc(sizeof(frp_uint8) * len);
-        while(len--)
-            $$.express->propname[len] = $2.temptext[len];
+        $$.express->propname = $2.temptext;
+        //$$.express->propname = frpmalloc(sizeof(frp_uint8) * len);
+        //while(len--)
+        //    $$.express->propname[len] = $2.temptext[len];
+        //frpfree($2.temptext);
     }
         break;
     }
