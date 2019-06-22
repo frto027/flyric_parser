@@ -2,6 +2,7 @@
 #include "fparser_platform.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
 
 #define BUILTIN_FUNC(funcname) float funcname(float * args)
 
@@ -40,7 +41,7 @@ void frpWarringCompileMessage(const frp_uint8 * msg,frp_size linecount,frp_size 
 }
 
 
-#include <math.h>
+
 BUILTIN_FUNC(frp_sin){
     return sinf(args[0]);
 }

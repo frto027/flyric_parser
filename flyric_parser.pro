@@ -8,7 +8,7 @@ SOURCES += \
         fparser_platform.c \
         frp_bison.tab.c \
         lex.frp_bison.c \
-        main.c
+        test.c
 
 HEADERS += \
     fparser.h \

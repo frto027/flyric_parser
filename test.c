@@ -5,7 +5,7 @@
 //this file is for debug only
 #define PERFORMANCE_COUNT_SEC 10
 
-#define NORMAL_TEST
+//#define NORMAL_TEST
 //#define MEMORY_LEAK_TEST
 //#define TIMELINE_TEST
 frp_uint8 buff[4096];

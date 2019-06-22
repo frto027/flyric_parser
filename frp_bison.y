@@ -2,10 +2,10 @@
 #include "fparser.h"
 #include "fparser_platform.h"
 
-#include <stdio.h>
-
 #define YYMALLOC frpmalloc
 #define YYFREE frpfree
+
+//#define ENABLE_TASK_PRINT
 
 int frp_bison_arg_source;
 frp_size frp_bison_arg_listcount;
@@ -190,7 +190,7 @@ int frp_bison_exist_arg_express(const char * argname){
 %token T_NUM
 %token T_WORD
 
-%destructor { printf("free[%s]",$$.temptext); frpfree($$.temptext); } T_WORD
+%destructor { frpfree($$.temptext); } T_WORD
 
 %left '+' '-'
 %left '*' '/'
@@ -199,9 +199,11 @@ int frp_bison_exist_arg_express(const char * argname){
 %%
 S   :   E   {
     switch(frp_bison_task){
+#ifdef ENABLE_TASK_PRINT
     case FRP_BISON_TASK_PRINT:
         printf("[END]\n");
         break;
+#endif
     case FRP_BISON_TASK_CALC:
         frp_bison_result = $1.express;
         break;
@@ -212,9 +214,11 @@ S   :   E   {
 
 LST :   LST ',' LST     {
     switch(frp_bison_task){
+#ifdef ENABLE_TASK_PRINT
     case FRP_BISON_TASK_PRINT:
         printf("[list]");
         break;
+#endif
     case FRP_BISON_TASK_CHECK:
         $$.list_count_check = $1.list_count_check + $3.list_count_check;
         break;
@@ -229,9 +233,11 @@ LST :   LST ',' LST     {
 }
     |   E               {
     switch(frp_bison_task){
+#ifdef ENABLE_TASK_PRINT
     case FRP_BISON_TASK_PRINT:
         printf("[list_elem]");
         break;
+#endif
     case FRP_BISON_TASK_CHECK:
         $$.list_count_check = 1;
         break;
@@ -248,9 +254,11 @@ LST :   LST ',' LST     {
 
 E   :   E '+' E         {
     switch(frp_bison_task){
+#ifdef ENABLE_TASK_PRINT
     case FRP_BISON_TASK_PRINT:
         printf("[+]");
         break;
+#endif
     case FRP_BISON_TASK_CHECK:
 
         break;
@@ -261,9 +269,11 @@ E   :   E '+' E         {
 }
     |   E '-' E         {
     switch(frp_bison_task){
+#ifdef ENABLE_TASK_PRINT
     case FRP_BISON_TASK_PRINT:
         printf("[-]");
         break;
+#endif
     case FRP_BISON_TASK_CHECK:
 
         break;
@@ -274,9 +284,11 @@ E   :   E '+' E         {
  }
     |   E '*' E         {
     switch(frp_bison_task){
+#ifdef ENABLE_TASK_PRINT
     case FRP_BISON_TASK_PRINT:
         printf("[*]");
         break;
+#endif
     case FRP_BISON_TASK_CHECK:
 
         break;
@@ -287,9 +299,11 @@ E   :   E '+' E         {
 }
     |   E '/' E         {
     switch(frp_bison_task){
+#ifdef ENABLE_TASK_PRINT
     case FRP_BISON_TASK_PRINT:
         printf("[/]");
         break;
+#endif
     case FRP_BISON_TASK_CHECK:
         break;
     case FRP_BISON_TASK_CALC:
@@ -299,9 +313,11 @@ E   :   E '+' E         {
 }
     |   T_NUM           {
     switch(frp_bison_task){
+#ifdef ENABLE_TASK_PRINT
     case FRP_BISON_TASK_PRINT:
         printf("[1]");
         break;
+#endif
     case FRP_BISON_TASK_CHECK:
         break;
     case FRP_BISON_TASK_CALC:
@@ -313,9 +329,11 @@ E   :   E '+' E         {
 }
     |   '(' E ')'       {
     switch(frp_bison_task){
+#ifdef ENABLE_TASK_PRINT
     case FRP_BISON_TASK_PRINT:
         printf("[()]");
         break;
+#endif
     case FRP_BISON_TASK_CHECK:
         break;
     case FRP_BISON_TASK_CALC:
@@ -325,9 +343,11 @@ E   :   E '+' E         {
  }
     |   '-' E {
     switch(frp_bison_task){
+#ifdef ENABLE_TASK_PRINT
     case FRP_BISON_TASK_PRINT:
         printf("[-]");
         break;
+#endif
     case FRP_BISON_TASK_CHECK:
         break;
     case FRP_BISON_TASK_CALC:
@@ -346,10 +366,12 @@ E   :   E '+' E         {
     |   T_WORD '(' ')'{
 
     switch(frp_bison_task){
+#ifdef ENABLE_TASK_PRINT
     case FRP_BISON_TASK_PRINT:
         printf("[f]");
         frpfree($1.temptext);
         break;
+#endif
     case FRP_BISON_TASK_CHECK:
         if(!frp_bison_exist_express_by_name($1.temptext,0)){
             frp_bison_report_error_varstr("parse error:function name not declared -> ",$1.temptext);
@@ -366,10 +388,12 @@ E   :   E '+' E         {
     }
     |   T_WORD '(' LST ')'{
     switch(frp_bison_task){
+#ifdef ENABLE_TASK_PRINT
     case FRP_BISON_TASK_PRINT:
         printf("[f]");
         frpfree($1.temptext);
         break;
+#endif
     case FRP_BISON_TASK_CHECK:
         if(!frp_bison_exist_express_by_name($1.temptext,$3.list_count_check)){
             frp_bison_report_error_varstr("parse error:function name not declared -> ",$1.temptext);
@@ -398,10 +422,12 @@ E   :   E '+' E         {
     |   '[' T_WORD ']' { //property name here
     //TOTEST
     switch(frp_bison_task){
+#ifdef ENABLE_TASK_PRINT
     case FRP_BISON_TASK_PRINT:
         printf("[prop]");
         frpfree($2.temptext);
         break;
+#endif
     case FRP_BISON_TASK_CHECK:
         frpfree($2.temptext);
         break;
@@ -422,10 +448,12 @@ E   :   E '+' E         {
 }
     |   T_WORD          {
     switch(frp_bison_task){
+#ifdef ENABLE_TASK_PRINT
     case FRP_BISON_TASK_PRINT:
         printf("[x]");
         frpfree($1.temptext);
         break;
+#endif
     case FRP_BISON_TASK_CHECK:
         if(!frp_bison_exist_arg_express($1.temptext)){
             frp_bison_report_error_varstr("parse error:argument name not declared -> ",$1.temptext);
