@@ -888,12 +888,12 @@ float frp_curve_expresult_calculate(FRCExpress * express,float * args,FRPValue *
 //this will free express and its relation express
 void frp_curveexp_free(FRCExpress * express,frp_size len){
     for(frp_size i = 0;i<len;i++){
-        switch (express->type) {
+        switch (express[i].type) {
         case FRCE_TYPE_FUNC:
-            frp_curveexp_free(express->func.argv,express->func.argc);
+            frp_curveexp_free(express[i].func.argv,express[i].func.argc);
             break;
         case FRCE_TYPE_CURVE:
-            frp_curveexp_free(express->curveexp.argv,express->curveexp.curveline->argc);\
+            frp_curveexp_free(express[i].curveexp.argv,express[i].curveexp.curveline->argc);
             break;
         }
     }
@@ -915,7 +915,6 @@ int frp_curve_seg_parser(PARSE_SEG_ARGS){
 
     const frp_uint8 * lyric = file->textpool;
 
-    FRCurveLine * lineend = NULL;
     frp_bison_curves_tobeused = NULL;
 
     //global used
@@ -1006,13 +1005,9 @@ int frp_curve_seg_parser(PARSE_SEG_ARGS){
             line->argc = frp_bison_arg_listcount;
             line->express = frp_bison_result;
             line->curvname = name;
-            line->next = NULL;
-            if(frp_bison_curves_tobeused == NULL){
-                frp_bison_curves_tobeused = lineend = line;
-            }else{
-                lineend->next = line;
-                lineend = line;
-            }
+            //add to top of segment
+            line->next = frp_bison_curves_tobeused;
+            frp_bison_curves_tobeused = line;
         }
         SKIPHALF();
 

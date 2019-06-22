@@ -190,6 +190,8 @@ int frp_bison_exist_arg_express(const char * argname){
 %token T_NUM
 %token T_WORD
 
+%destructor { printf("free[%s]",$$.temptext); frpfree($$.temptext); } T_WORD
+
 %left '+' '-'
 %left '*' '/'
 %left ','

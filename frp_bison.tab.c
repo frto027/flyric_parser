@@ -612,8 +612,8 @@ static const yytype_uint8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint16 yyrline[] =
 {
-       0,   198,   198,   211,   228,   247,   260,   273,   286,   298,
-     312,   324,   344,   365,   396,   419
+       0,   200,   200,   213,   230,   249,   262,   275,   288,   300,
+     314,   326,   346,   367,   398,   421
 };
 #endif
 
@@ -1141,7 +1141,18 @@ yydestruct (const char *yymsg, int yytype, YYSTYPE *yyvaluep)
   YY_SYMBOL_PRINT (yymsg, yytype, yyvaluep, yylocationp);
 
   YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN
-  YYUSE (yytype);
+  switch (yytype)
+    {
+          case 4: /* T_WORD  */
+#line 193 "frp_bison.y" /* yacc.c:1258  */
+      { printf("free[%s]",((*yyvaluep)).temptext); frpfree(((*yyvaluep)).temptext); }
+#line 1150 "frp_bison.tab.c" /* yacc.c:1258  */
+        break;
+
+
+      default:
+        break;
+    }
   YY_IGNORE_MAYBE_UNINITIALIZED_END
 }
 
@@ -1397,7 +1408,7 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 198 "frp_bison.y" /* yacc.c:1648  */
+#line 200 "frp_bison.y" /* yacc.c:1648  */
     {
     switch(frp_bison_task){
     case FRP_BISON_TASK_PRINT:
@@ -1409,11 +1420,11 @@ yyreduce:
     }
     YYACCEPT;
 }
-#line 1413 "frp_bison.tab.c" /* yacc.c:1648  */
+#line 1424 "frp_bison.tab.c" /* yacc.c:1648  */
     break;
 
   case 3:
-#line 211 "frp_bison.y" /* yacc.c:1648  */
+#line 213 "frp_bison.y" /* yacc.c:1648  */
     {
     switch(frp_bison_task){
     case FRP_BISON_TASK_PRINT:
@@ -1431,11 +1442,11 @@ yyreduce:
         break;
     }
 }
-#line 1435 "frp_bison.tab.c" /* yacc.c:1648  */
+#line 1446 "frp_bison.tab.c" /* yacc.c:1648  */
     break;
 
   case 4:
-#line 228 "frp_bison.y" /* yacc.c:1648  */
+#line 230 "frp_bison.y" /* yacc.c:1648  */
     {
     switch(frp_bison_task){
     case FRP_BISON_TASK_PRINT:
@@ -1453,11 +1464,11 @@ yyreduce:
         break;
     }
 }
-#line 1457 "frp_bison.tab.c" /* yacc.c:1648  */
+#line 1468 "frp_bison.tab.c" /* yacc.c:1648  */
     break;
 
   case 5:
-#line 247 "frp_bison.y" /* yacc.c:1648  */
+#line 249 "frp_bison.y" /* yacc.c:1648  */
     {
     switch(frp_bison_task){
     case FRP_BISON_TASK_PRINT:
@@ -1471,11 +1482,11 @@ yyreduce:
         break;
     }
 }
-#line 1475 "frp_bison.tab.c" /* yacc.c:1648  */
+#line 1486 "frp_bison.tab.c" /* yacc.c:1648  */
     break;
 
   case 6:
-#line 260 "frp_bison.y" /* yacc.c:1648  */
+#line 262 "frp_bison.y" /* yacc.c:1648  */
     {
     switch(frp_bison_task){
     case FRP_BISON_TASK_PRINT:
@@ -1489,11 +1500,11 @@ yyreduce:
         break;
     }
  }
-#line 1493 "frp_bison.tab.c" /* yacc.c:1648  */
+#line 1504 "frp_bison.tab.c" /* yacc.c:1648  */
     break;
 
   case 7:
-#line 273 "frp_bison.y" /* yacc.c:1648  */
+#line 275 "frp_bison.y" /* yacc.c:1648  */
     {
     switch(frp_bison_task){
     case FRP_BISON_TASK_PRINT:
@@ -1507,11 +1518,11 @@ yyreduce:
         break;
     }
 }
-#line 1511 "frp_bison.tab.c" /* yacc.c:1648  */
+#line 1522 "frp_bison.tab.c" /* yacc.c:1648  */
     break;
 
   case 8:
-#line 286 "frp_bison.y" /* yacc.c:1648  */
+#line 288 "frp_bison.y" /* yacc.c:1648  */
     {
     switch(frp_bison_task){
     case FRP_BISON_TASK_PRINT:
@@ -1524,11 +1535,11 @@ yyreduce:
         break;
     }
 }
-#line 1528 "frp_bison.tab.c" /* yacc.c:1648  */
+#line 1539 "frp_bison.tab.c" /* yacc.c:1648  */
     break;
 
   case 9:
-#line 298 "frp_bison.y" /* yacc.c:1648  */
+#line 300 "frp_bison.y" /* yacc.c:1648  */
     {
     switch(frp_bison_task){
     case FRP_BISON_TASK_PRINT:
@@ -1543,11 +1554,11 @@ yyreduce:
         break;
     }
 }
-#line 1547 "frp_bison.tab.c" /* yacc.c:1648  */
+#line 1558 "frp_bison.tab.c" /* yacc.c:1648  */
     break;
 
   case 10:
-#line 312 "frp_bison.y" /* yacc.c:1648  */
+#line 314 "frp_bison.y" /* yacc.c:1648  */
     {
     switch(frp_bison_task){
     case FRP_BISON_TASK_PRINT:
@@ -1560,11 +1571,11 @@ yyreduce:
         break;
     }
  }
-#line 1564 "frp_bison.tab.c" /* yacc.c:1648  */
+#line 1575 "frp_bison.tab.c" /* yacc.c:1648  */
     break;
 
   case 11:
-#line 324 "frp_bison.y" /* yacc.c:1648  */
+#line 326 "frp_bison.y" /* yacc.c:1648  */
     {
     switch(frp_bison_task){
     case FRP_BISON_TASK_PRINT:
@@ -1585,11 +1596,11 @@ yyreduce:
         break;
     }
 }
-#line 1589 "frp_bison.tab.c" /* yacc.c:1648  */
+#line 1600 "frp_bison.tab.c" /* yacc.c:1648  */
     break;
 
   case 12:
-#line 344 "frp_bison.y" /* yacc.c:1648  */
+#line 346 "frp_bison.y" /* yacc.c:1648  */
     {
 
     switch(frp_bison_task){
@@ -1611,11 +1622,11 @@ yyreduce:
         }
         break;
     }
-#line 1615 "frp_bison.tab.c" /* yacc.c:1648  */
+#line 1626 "frp_bison.tab.c" /* yacc.c:1648  */
     break;
 
   case 13:
-#line 365 "frp_bison.y" /* yacc.c:1648  */
+#line 367 "frp_bison.y" /* yacc.c:1648  */
     {
     switch(frp_bison_task){
     case FRP_BISON_TASK_PRINT:
@@ -1647,11 +1658,11 @@ yyreduce:
         break;
     }
 }
-#line 1651 "frp_bison.tab.c" /* yacc.c:1648  */
+#line 1662 "frp_bison.tab.c" /* yacc.c:1648  */
     break;
 
   case 14:
-#line 396 "frp_bison.y" /* yacc.c:1648  */
+#line 398 "frp_bison.y" /* yacc.c:1648  */
     { //property name here
     //TOTEST
     switch(frp_bison_task){
@@ -1675,11 +1686,11 @@ yyreduce:
         break;
     }
 }
-#line 1679 "frp_bison.tab.c" /* yacc.c:1648  */
+#line 1690 "frp_bison.tab.c" /* yacc.c:1648  */
     break;
 
   case 15:
-#line 419 "frp_bison.y" /* yacc.c:1648  */
+#line 421 "frp_bison.y" /* yacc.c:1648  */
     {
     switch(frp_bison_task){
     case FRP_BISON_TASK_PRINT:
@@ -1700,11 +1711,11 @@ yyreduce:
         break;
     }
 }
-#line 1704 "frp_bison.tab.c" /* yacc.c:1648  */
+#line 1715 "frp_bison.tab.c" /* yacc.c:1648  */
     break;
 
 
-#line 1708 "frp_bison.tab.c" /* yacc.c:1648  */
+#line 1719 "frp_bison.tab.c" /* yacc.c:1648  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -1932,7 +1943,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 440 "frp_bison.y" /* yacc.c:1907  */
+#line 442 "frp_bison.y" /* yacc.c:1907  */
 
 
 
