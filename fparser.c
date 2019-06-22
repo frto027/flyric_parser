@@ -488,7 +488,7 @@ void frp_flyc_free_values(FRPValue * value){
             value->anim_apply = n;
         }
     }
-    frpfree(value);
+    //frpfree(value);
 }
 
 void flyc_release_lines(FRPSeg * seg){
@@ -708,7 +708,6 @@ int flyc_seg_parser(PARSE_SEG_ARGS){
                 }else{
                     currentLine->next = frpmalloc(sizeof (FRPLine));
                     currentLine = currentLine->next;
-
                 }
                 if(currentLine != NULL){
                     currentLine->next = NULL;
@@ -770,6 +769,7 @@ int flyc_seg_parser(PARSE_SEG_ARGS){
     return 0;
 
 ERROR:
+    //Maybe memory leak
     //Todo release all memory plsease
     if(currentValue != NULL)
         frpfree(currentValue);//这里的currentValue并不一定是完整的初始化过的currentValue，直接free即可
@@ -785,14 +785,21 @@ ERROR:
 void frp_flyc_seg_free(FRPSeg * seg){
     while(seg->flyc.lines){
         FRPLine * n = seg->flyc.lines->next;
+        //free node
         FRPNode * node = seg->flyc.lines->node;
         while(node){
             FRPNode *nn = node->next;
-            frp_flyc_free_values(node->values);
+            for(frp_size i = 0;i<seg->flyc.value_count;i++)
+                frp_flyc_free_values(node->values + i);
+            frpfree(node->values);
             frpfree(node);
             node = nn;
         }
-        frp_flyc_free_values(seg->flyc.lines->values);
+        //free value
+        for(frp_size i = 0;i<seg->flyc.value_count;i++)
+            frp_flyc_free_values(seg->flyc.lines->values + i);
+        frpfree(seg->flyc.lines->values);
+        frpfree(seg->flyc.lines);
         seg->flyc.lines = n;
     }
 }
@@ -1307,6 +1314,7 @@ skip_line:
 void frp_anim_prop_free(FRAProp * prop){
     frp_curveexp_free(prop->func_exp,1);
     frp_curveexp_free(prop->during_exp,1);
+    frp_curveexp_free(prop->offset_exp,1);
     frpfree(prop);
 }
 
@@ -1551,6 +1559,21 @@ void frpinit(){
         }
     }
 
+}
+void frpshutdown(){
+    while(frp_flyc_prop){
+        struct frp_flyc_prop_type * n = frp_flyc_prop->next;
+        frpfree(frp_flyc_prop);
+        frp_flyc_prop = n;
+    }
+
+    while(frp_support_anims){
+        struct FrpSupportAnims * n = frp_support_anims->next;
+        frpfree(frp_support_anims->propname);
+        frpfree(frp_support_anims);
+        frp_support_anims = n;
+    }
+    frp_bisonlex_destroy();
 }
 
 

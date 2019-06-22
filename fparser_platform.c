@@ -5,8 +5,12 @@
 
 #define BUILTIN_FUNC(funcname) float funcname(float * args)
 
-void * frpmalloc(unsigned int size){
+void * frpmalloc(unsigned long size){
     return malloc(size);
+}
+
+void * frprealloc (void * ptr,unsigned long size){
+    return realloc(ptr,size);
 }
 
 void frpfree(void * ptr){

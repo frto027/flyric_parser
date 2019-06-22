@@ -708,6 +708,8 @@ char *yytext;
 #include "fparser.h"
 #include "frp_bison.tab.h"
 
+#define YYMALLOC frpmalloc
+
 #define YY_NO_UNPUT
 #define YY_NO_INPUT
 
@@ -729,8 +731,8 @@ frp_str frp_flex_textpoolstr;
         result = sz ? sz : YY_NULL;\
     }
 */
-#line 732 "lex.frp_bison.c"
-#line 733 "lex.frp_bison.c"
+#line 734 "lex.frp_bison.c"
+#line 735 "lex.frp_bison.c"
 
 #define INITIAL 0
 
@@ -947,9 +949,9 @@ YY_DECL
 		}
 
 	{
-#line 32 "frp_flex.l"
+#line 36 "frp_flex.l"
 
-#line 952 "lex.frp_bison.c"
+#line 954 "lex.frp_bison.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1008,7 +1010,7 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 33 "frp_flex.l"
+#line 37 "frp_flex.l"
 {
     //printf("[%c]",*yytext);
     return *yytext;
@@ -1016,7 +1018,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 37 "frp_flex.l"
+#line 41 "frp_flex.l"
 {
     //printf("[int:%s]",yytext);
     int beg = 0;
@@ -1037,14 +1039,14 @@ YY_RULE_SETUP
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 54 "frp_flex.l"
+#line 58 "frp_flex.l"
 {
     /* ignore */
 }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 57 "frp_flex.l"
+#line 61 "frp_flex.l"
 {
     //printf("[word:%s]",yytext);
     frp_size len = 0;
@@ -1059,10 +1061,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 68 "frp_flex.l"
+#line 72 "frp_flex.l"
 ECHO;
 	YY_BREAK
-#line 1065 "lex.frp_bison.c"
+#line 1067 "lex.frp_bison.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -2042,46 +2044,22 @@ static int yy_flex_strlen (const char * s )
 }
 #endif
 
-void *yyalloc (yy_size_t  size )
-{
-			return malloc(size);
-}
-
-void *yyrealloc  (void * ptr, yy_size_t  size )
-{
-		
-	/* The cast to (char *) in the following accommodates both
-	 * implementations that use char* generic pointers, and those
-	 * that use void* generic pointers.  It works with the latter
-	 * because both ANSI C and C++ allow castless assignment from
-	 * any pointer type to void*, and deal with argument conversions
-	 * as though doing an assignment.
-	 */
-	return realloc(ptr, size);
-}
-
-void yyfree (void * ptr )
-{
-			free( (char *) ptr );	/* see yyrealloc() for (char *) cast */
-}
-
 #define YYTABLES_NAME "yytables"
 
-#line 68 "frp_flex.l"
+#line 72 "frp_flex.l"
 
-
-//int frp_yy_eos;
+void *yyalloc (yy_size_t  s){
+    return frpmalloc(s);
+}
+void *yyrealloc (void *p, yy_size_t s){
+    return frprealloc(p,s);
+}
+void yyfree (void * p){
+    frpfree(p);
+}
 
 int yywrap(){
-    //frp_yy_eos = 1;
     return 1;
 }
-/*
-int frp_yyflex(){
-    frp_yy_eos = 0;
-    while(!frp_yy_eos){
-        frp_bisonlex();
-    }
-}
-*/
+
 

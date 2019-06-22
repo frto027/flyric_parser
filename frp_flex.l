@@ -3,6 +3,8 @@
 #include "fparser.h"
 #include "frp_bison.tab.h"
 
+#define YYMALLOC frpmalloc
+
 #define YY_NO_UNPUT
 #define YY_NO_INPUT
 
@@ -25,6 +27,8 @@ frp_str frp_flex_textpoolstr;
     }
 */
 %}
+%option noyyalloc noyyfree noyyrealloc
+
 OPERATOR        [-+*/\[\]()=,:]
 NUMBER          (\.[0-9]+)|([0-9]*\.?[0-9]*)
 WHITSPACE       [ \t]*
@@ -66,18 +70,17 @@ WORD            [^-+*/\\[\]()=,:0-9 \t\r\n]+
     return T_WORD;
 }
 %%
-
-//int frp_yy_eos;
+void *yyalloc (yy_size_t  s){
+    return frpmalloc(s);
+}
+void *yyrealloc (void *p, yy_size_t s){
+    return frprealloc(p,s);
+}
+void yyfree (void * p){
+    frpfree(p);
+}
 
 int yywrap(){
-    //frp_yy_eos = 1;
     return 1;
 }
-/*
-int frp_yyflex(){
-    frp_yy_eos = 0;
-    while(!frp_yy_eos){
-        frp_bisonlex();
-    }
-}
-*/
+

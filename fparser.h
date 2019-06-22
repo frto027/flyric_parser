@@ -27,7 +27,7 @@ typedef struct FRPValue{
         int integer;
         struct{
             float num;
-            struct FRLanim * anim_apply;//todo,play this.
+            struct FRLanim * anim_apply;
         };
         frp_time time;
     };
@@ -171,6 +171,7 @@ extern void frpstr_fill(const frp_uint8 * textpool,const frp_str str,frp_uint8 b
 extern FRPSeg * frp_getseg(FRPFile * file,const frp_uint8 * name);
 
 extern void frpinit(void);
+extern void frpshutdown(void);
 
 extern void frp_anim_add_support(const frp_uint8 * property);
 
@@ -198,6 +199,8 @@ extern float frp_play_property_float_value(frp_time time, FRPValue * values,frp_
 
 #define FRP_BISON_ARG_SOURCE_TEXTPOOL 0
 #define FRP_BISON_ARG_SOURCE_RAWSTR 1
+
+extern int frp_bisonlex_destroy(void);
 
 extern const frp_uint8 * frp_flex_textpool;
 extern frp_str frp_flex_textpoolstr;

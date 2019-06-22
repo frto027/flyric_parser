@@ -4,6 +4,9 @@
 
 #include <stdio.h>
 
+#define YYMALLOC frpmalloc
+#define YYFREE frpfree
+
 int frp_bison_arg_source;
 frp_size frp_bison_arg_listcount;
 frp_str frp_bison_arg_names[FRCE_MAX_ARG_COUNT];

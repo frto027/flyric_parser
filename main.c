@@ -4,6 +4,10 @@
 #include "fparser.h"
 //this file is for debug only
 #define PERFORMANCE_COUNT_SEC 10
+
+//#define NORMAL_TEST
+#define MEMORY_LEAK_TEST
+
 frp_uint8 buff[4096];
 float frp_curve_expresult_calculate(FRCExpress * express,float * args);
 void printString(frp_str str){
@@ -89,10 +93,15 @@ int main(int argc,char **argv)
     //windows only(change cmd to utf-8)
     //system("@chcp 65001 > nul");
 
+    printf("GO");
+
     if(argc != 2){
         printf("file name is need.\n");
         return 0;
     }
+
+
+#ifdef NORMAL_TEST
 
     FILE * f = fopen(argv[1],"rb");
     //这里要用二进制读入，传入必须是utf-8编码的文件
@@ -156,6 +165,40 @@ int main(int argc,char **argv)
     }else {
         printf("file is not open.");
     }
+#endif
+
+#ifdef MEMORY_LEAK_TEST
+
+    FILE * f = fopen(argv[1],"rb");
+    fread(buff,sizeof(frp_uint8),4096,f);
+    fclose(f);
+
+    frpinit();
+    frp_anim_add_support("ColorR");
+    printf("ready to parse.\n");
+
+    printf("test no copy.\n");
+
+    for(int i = 0;i<1;i++){
+        printf("before read loop %d.\n",i);
+        FRPFile * f = frpopen(buff,4096,1);
+        frpdestroy(f);
+        printf("end read loop %d.\n",i);
+    }
+
+
+/*
+    printf("test copy.\n");
+    for(int i = 0;i<3;i++){
+        printf("before read loop %d.\n",i);
+        getchar();
+        FRPFile * f = frpopen(buff,4096,0);
+        frpdestroy(f);
+        printf("end read loop %d.\n",i);
+    }
+    */
+    frpshutdown();
+#endif
     return 0;
 }
 

@@ -21,7 +21,8 @@ typedef signed long long frp_time;
 /// \return
 /// pointer to size
 ///
-extern void * frpmalloc(unsigned int size);
+extern void * frpmalloc(unsigned long size);
+extern void * frprealloc (void * ptr,unsigned long size);
 ///
 /// \brief frpfree
 /// free memory
