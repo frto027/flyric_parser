@@ -139,7 +139,7 @@ int frpstr_cmp(const frp_uint8 * textpool,const frp_str stra,const frp_str strb)
     return 0;
 }
 
-void frpstr_fill(const frp_uint8 * textpool,const frp_str str,frp_uint8 buff[],frp_size size){
+frp_size frpstr_fill(const frp_uint8 * textpool,const frp_str str,frp_uint8 buff[],frp_size size){
     frp_size mx = MIN(str.len,size);
     const frp_uint8 * strbeg = textpool + str.beg;
     frp_size i = 0;
@@ -166,6 +166,9 @@ void frpstr_fill(const frp_uint8 * textpool,const frp_str str,frp_uint8 buff[],f
         strbeg++;
     }
     frp_utf8_fix(buff,i);
+    while(i > 0 && buff[i])
+        i--;//find the close mark
+    return i;
 }
 //find and get seg.
 FRPSeg * frp_getseg(FRPFile * file,const frp_uint8 * name){
@@ -1420,7 +1423,245 @@ float frp_play_property_float_value(frp_time time, FRPValue * values,frp_size pr
     }
     return target->num;
 }
+//这个结构体是线段树的节点，用于辅助构建timeline
+struct FPTHelper{
+    frp_time beg;
+    frp_time end;
+    FRTNode * line;
+};
 
+void frp_play_init_qsort_subprogram(struct FPTHelper * array,frp_size beg,frp_size end){
+   if(end <= beg + 1)
+       return;
+   frp_size i = beg,j = end;
+   frp_time key = array[beg].beg;
+   for(;;)
+   {
+       while(i < end - 1 && array[++i].beg <= key)
+           ;
+       while(j > beg && array[--j].beg >= key)
+           ;
+       if(i < j){
+           //swap
+           frp_time t = array[i].beg;
+           array[i].beg = array[j].beg;
+           array[j].beg = t;
+       }else{
+           break;
+       }
+   }
+   frp_time t = array[j].beg;
+   array[j].beg = array[beg].beg;
+   array[beg].beg = t;
+   frp_play_init_qsort_subprogram(array,beg,j);
+   frp_play_init_qsort_subprogram(array,j+1,end);
+}
+///
+/// \brief frp_play_init_timeline_segfill
+/// 填充一个line到线段树tree上编号为node的子结点上
+///
+void frp_play_init_timeline_segfill(FRPLine * line,struct FPTHelper * tree,frp_size node){
+    if(line->starttime <= tree[node].beg && line->endtime >= tree[node].end){
+        //fill at the point
+        //printf("fill %d[%lld:%lld]\n",node,tree[node].beg,tree[node].end);
+        FRTNode * nn = frpmalloc(sizeof(FRTNode));
+        nn->next = tree[node].line;
+        if(nn->next)
+            nn->next->refcount++;
+        nn->refcount = 0;
+        nn->line = line;
+        tree[node].line = nn;
+    }else if(line->starttime >= tree[node * 2].end){
+        frp_play_init_timeline_segfill(line,tree,node * 2 + 1);
+    }else if(line->endtime <= tree[node*2].end){
+        frp_play_init_timeline_segfill(line,tree,node * 2);
+    }else{
+        frp_play_init_timeline_segfill(line,tree,node * 2);
+        frp_play_init_timeline_segfill(line,tree,node * 2 + 1);
+    }
+}
+//这里用的是线段树辅助搭建时间线上的链表
+void frp_play_init_timeline(FRPFile * file){
+    FRFlyc * flyc = &frp_getseg(file,ANSI2UTF8("flyc"))->flyc;
+    if(flyc == NULL || flyc->lines == NULL){
+        file->timeline = NULL;
+        return;
+    }
+
+    frp_size linecount = 0;
+
+    for(FRPLine * l = flyc->lines;l;l = l->next)
+        linecount++;
+
+    frp_size treesize = 1;
+    while(treesize < linecount * 2)
+        treesize *= 2;
+    treesize *= 2;
+
+    //tree[0]不用，下标从1开始
+    struct FPTHelper * tree = frpmalloc(sizeof(struct FPTHelper) * treesize);
+    //array是树的最底层
+    struct FPTHelper * array = tree + treesize / 2;
+
+    frp_size end_of_array = 0;
+    for(FRPLine * l = flyc->lines;l;l=l->next){
+        array[end_of_array++].beg=l->starttime;
+        array[end_of_array++].beg=l->endtime;
+    }
+    //sort for array
+    frp_play_init_qsort_subprogram(array,0,end_of_array);
+    //去重复
+    //可以保证至少有两个数字
+    frp_size actual_count = 0;
+    for(frp_size i = 1;i<end_of_array;i++){
+        if(array[actual_count].beg != array[i].beg)
+            array[++actual_count].beg = array[i].beg;
+    }
+    //actual_count元素的beg是最远不可能到达的时间，从下标为actual_count开始其实就是没用的区间了
+    //已经去重复了
+    //建树
+    //最底层
+    for(frp_size i = 0;i<actual_count;i++){
+        array[i].end = array[i+1].beg;
+        array[i].line = NULL;
+    }
+    for(frp_size i = actual_count;i<treesize / 2;i++){
+        array[i].end = array[i].beg = array[i-1].end;
+        //array[i].line = NULL; // 没必要，不会用到的
+    }
+    //上层
+    for(frp_size i = treesize / 2 - 1;i > 0;i--){
+        tree[i].beg = tree[i*2].beg;
+        tree[i].end = tree[i*2+1].end;
+        tree[i].line = NULL;
+    }
+/*
+    for(int i=0;i<treesize;i++){
+        printf("[%d|%lld:%lld]",i,tree[i].beg,tree[i].end);
+    }
+*/
+    for (FRPLine * l = flyc->lines;l;l=l->next) {
+        if(l->starttime >= l->endtime)
+            continue;//持续时间为0的或者不合法的全部跳过
+        //printf("fill line-[%d:%d]->\n",l->starttime,l->endtime);
+        frp_play_init_timeline_segfill(l,tree,1);
+    }
+
+    //make list
+    for(frp_size i = 2;i<treesize / 2 + actual_count;i++){
+        if(tree[i].line == NULL)
+            tree[i].line = tree[i/2].line;//向下传播
+        else{
+            //继承父节点
+            FRTNode * node = tree[i].line;
+            while(node->next)
+                node = node->next;
+            node->next = tree[i/2].line;
+            if(node->next)
+                node->next->refcount++;
+        }
+    }
+    FRTimeline * timelinebeg = NULL;
+    FRTimeline * tail = NULL;
+    for(frp_size i = 0;i<actual_count;i++){
+        FRTimeline * curr = frpmalloc(sizeof(FRTimeline));
+        curr->before = tail;
+        curr->begtime = array[i].beg;
+        curr->lines = array[i].line;
+        if(curr->lines)
+            curr->lines->refcount++;
+        if(tail == NULL){
+            timelinebeg = tail = curr;
+        }else{
+            tail->after = curr;
+            tail = curr;
+        }
+    }
+    tail->after = NULL;
+
+    file->timeline = timelinebeg;
+
+    frpfree(tree);
+}
+void frp_play_destroy_timeline_node(FRTNode * node){
+    while(node && node->refcount == 0){
+        FRTNode * next = node->next;
+        frpfree(node);
+        if(next)
+            next->refcount--;
+        node = next;
+    }
+}
+void frp_play_free_timeline(FRPFile * file){
+    if(file->timeline == NULL)
+        return;
+    FRTimeline * timeline =  file->timeline;
+
+    while(timeline->before)
+        timeline = timeline->before;
+
+    while(timeline){
+        FRTimeline * n = timeline->after;
+        if(timeline->lines){
+            timeline->lines->refcount--;
+            frp_play_destroy_timeline_node(timeline->lines);
+        }
+        frpfree(timeline);
+        timeline = n;
+    }
+
+    file->timeline = NULL;
+}
+FRTNode * frp_play_getline_by_time(FRPFile * file,frp_time time){
+    if(file->timeline == NULL)
+        return NULL;
+    FRTimeline * t = file->timeline;
+    while(t->before && t->begtime > time)
+        t = t->before;
+    while(t->after && t->after->begtime <= time)
+        t = t->after;
+    file->timeline = t;
+    return t->lines;
+}
+
+frp_time frp_play_next_switchline_time(FRPFile * file,frp_time time){
+    if(file->timeline != NULL){
+        FRTimeline * t = file->timeline;
+        while(t->before && t->begtime > time)
+            t = t->before;
+        while(t->after && t->after->begtime <= time)
+            t = t->after;
+        file->timeline = t;
+        if(t->after){
+            return t->after->begtime;
+        }else{
+            return t->begtime;
+        }
+    }
+    return 0;//no time
+}
+frp_bool frp_play_has_more_line(FRPFile * file){
+    return file->timeline != NULL && file->timeline->after != NULL;
+}
+
+frp_size frp_play_fill_node_text(FRPFile * file, FRPNode * node,frp_size property_id,frp_uint8 * buff,frp_size size){
+    if(size == 0)
+        return 0;
+    if(property_id >= FRP_MAX_SEGMENT_PROPERTY_COUNT || node->values[property_id].type != FRPVALUE_TYPE_STR){
+        buff[0]=0;
+        return 0;
+    }
+    return frpstr_fill(file->textpool,node->values[property_id].str,buff,size);
+}
+frp_size frp_play_fill_line_text(FRPFile * file, FRPLine * line,frp_size property_id,frp_uint8 * buff,frp_size size){
+    frp_size already = 0;
+    FRPNode * node = line->node;
+    while(node){
+        already += frp_play_fill_node_text(file,node,property_id,buff + already,size - already);
+        node = node->next;
+    }
+    return already;
+}
 //end of frp play
 
 //begin of FRL parser(load lyric and calcupate property)
@@ -1685,6 +1926,8 @@ FRPFile * frpopen(const frp_uint8 * lyric,frp_size maxlength,frp_bool no_copy){
     if(flycseg && animseg){
         frp_init_anim_and_times(&flycseg->flyc,&animseg->anim,file->textpool);
     }
+    //init timeline
+    frp_play_init_timeline(file);
 
     return file;
 
@@ -1708,6 +1951,9 @@ void frpdestroy(FRPFile * file){
         seg = frp_getseg(file,ANSI2UTF8("flyc"));
         if(seg)
             frp_flyc_seg_free(seg);
+        frp_play_free_timeline(file);
+        if(file->release_textpool)
+            frpfree((void *)(file->textpool));
         frpfree(file);
     }
 }

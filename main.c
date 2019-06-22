@@ -5,9 +5,9 @@
 //this file is for debug only
 #define PERFORMANCE_COUNT_SEC 10
 
-//#define NORMAL_TEST
-#define MEMORY_LEAK_TEST
-
+#define NORMAL_TEST
+//#define MEMORY_LEAK_TEST
+//#define TIMELINE_TEST
 frp_uint8 buff[4096];
 float frp_curve_expresult_calculate(FRCExpress * express,float * args);
 void printString(frp_str str){
@@ -187,17 +187,46 @@ int main(int argc,char **argv)
     }
 
 
-/*
     printf("test copy.\n");
-    for(int i = 0;i<3;i++){
+    for(int i = 0;i<0;i++){
         printf("before read loop %d.\n",i);
-        getchar();
         FRPFile * f = frpopen(buff,4096,0);
         frpdestroy(f);
         printf("end read loop %d.\n",i);
     }
-    */
+
     frpshutdown();
+#endif
+
+#ifdef TIMELINE_TEST
+    FILE * f = fopen(argv[1],"rb");
+    fread(buff,sizeof(frp_uint8),4096,f);
+    fclose(f);
+
+    frpinit();
+    frp_anim_add_support("ColorR");
+    printf("ready to parse.\n");
+
+    FRPFile * file = frpopen(buff,4096,1);
+
+    FRTNode * node = NULL;
+    frp_time curtime = 0;
+    //node = frp_play_getline_by_time(file,curtime);
+
+    frp_size pid = frp_play_get_property_id(file,"Text");
+
+    do{
+        node = frp_play_getline_by_time(file,curtime);
+        char ch[2048];
+        printf("playing at %lld:\n",curtime);
+        while(node){
+            frp_play_fill_line_text(file,node->line,pid,ch,2018);
+            printf("lyric:[%s]\n",ch);
+            node = node->next;
+        }
+        curtime = frp_play_next_switchline_time(file,curtime);
+    }while(frp_play_has_more_line(file));
+
 #endif
     return 0;
 }

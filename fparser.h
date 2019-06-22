@@ -144,13 +144,31 @@ typedef struct FRPSeg{
     };
 }FRPSeg;
 
+typedef struct FRTNode{
+    FRPLine * line;//释放的时候不要释放这个
+    int refcount;//对next的引用计数
+    struct FRTNode * next;//双向链表
+}FRTNode;
+
+typedef struct FRTimeline{
+    FRTNode * lines;//当前时间点播放的所有行链表
+    frp_time begtime;//当前点的开始时间
+    struct FRTimeline *before,*after;
+}FRTimeline;
+
 typedef struct FRPFile{
     FRPSeg segs[FRP_MAX_SEGMENT_COUNT];
     frp_size segcount;
     const frp_uint8 * textpool;
     frp_bool release_textpool;
+    FRTimeline * timeline;//时间线，双向链表，这个不是头节点，而是随着文件读取前后滑动的
 }FRPFile;
 
+extern FRTNode * frp_play_getline_by_time(FRPFile * file,frp_time time);
+extern frp_time frp_play_next_switchline_time(FRPFile * file,frp_time time);
+extern frp_bool frp_play_has_more_line(FRPFile * file);
+extern frp_size frp_play_fill_node_text(FRPFile * file, FRPNode * node,frp_size property_id,frp_uint8 * buff,frp_size size);
+extern frp_size frp_play_fill_line_text(FRPFile * file, FRPLine * line,frp_size property_id,frp_uint8 * buff,frp_size size);
 //tool functions
 //extern frp_size frpstrlen(const frp_str str);
 #define frpstr_index(p_frpfile,str,i) ((p_frpfile)->textpool[(str).beg + (i)])
@@ -166,7 +184,7 @@ extern int frpstr_cmp(const frp_uint8 * textpool,const frp_str stra,const frp_st
 extern int frpstr_rcmp(const frp_uint8 * textpool,const frp_str stra,const frp_uint8 strb[]);
 extern int frpstr_rrcmp(const frp_uint8 stra[],const frp_uint8 strb[]);
 //这里会处理转义符的
-extern void frpstr_fill(const frp_uint8 * textpool,const frp_str str,frp_uint8 buff[],frp_size size);
+extern frp_size frpstr_fill(const frp_uint8 * textpool,const frp_str str,frp_uint8 buff[],frp_size size);
 //find and get a segment from file,do not build new segment.return null if failed
 extern FRPSeg * frp_getseg(FRPFile * file,const frp_uint8 * name);
 
