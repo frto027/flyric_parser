@@ -1370,7 +1370,13 @@ void frp_anim_parse_express(FRAnim *anim,FRFlyc * flyc,const frp_uint8 * textpoo
 void frp_anim_seg_free(FRPSeg * seg){
     while(seg->anim.lines){
         FRALine * n = seg->anim.lines->next;
-        frp_anim_prop_free(seg->anim.lines->prop);
+        //free all prop
+        FRAProp * p = seg->anim.lines->prop;
+        while(p){
+            FRAProp * pn = p->next;
+            frp_anim_prop_free(p);
+            p = pn;
+        }
         frpfree(seg->anim.lines);
         seg->anim.lines = n;
     }

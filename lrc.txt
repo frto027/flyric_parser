@@ -2,13 +2,14 @@
 SS:22
 MM:33
 SuperShake(x,y):sin(SS()*MM()*[Duration]*MM()*x)
-#SuperShake(x):SuperShake(x,2)
+SuperShake(x):SuperShake(x,2)
 
 
-#[anim]
-#Name,Property,Func,During,Offset
-#Shake,ColorR,SuperShake(x),123,0
-#Shake,ColorG,
+[anim]
+Name,Property,Func,During,Offset
+Shake,ColorG,SuperShake(x),123,0
+Shake,ColorB,SuperShake(x),123,0
+Shake,ColorG,
 
 
 [flyc]
