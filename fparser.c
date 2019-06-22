@@ -631,19 +631,17 @@ int flyc_seg_parser(PARSE_SEG_ARGS){
                 break;
             case FRP_FLYC_RELATION_LINE:
                 frpParseSpace(lyric,cursor,maxlen);
-                currentValue[i].type = FRPVALUE_TYPE_TIM;
                 if(FRP_READ == '>' || FRP_READ == '<'){//relative
                     int move_right = FRP_READ == '>';
                     FRP_MOVE_NEXT();
-                    frp_time it = frpParseTime(lyric,cursor,maxlen);
-                    if(currentLine == NULL){
-                        currentValue[i].time = it;
+                    if(FRP_READ == (move_right ? '>' :'<')){
+                        FRP_MOVE_NEXT();
+                        currentValue[i].type = FRPVALUE_TYPE_RELATIVE_TIME_NODE;
                     }else{
-                        if(move_right)
-                            currentValue[i].time = currentLine->values[i].time + it;
-                        else
-                            currentValue[i].time = currentLine->values[i].time - it;
+                        currentValue[i].type = FRPVALUE_TYPE_RELATIVE_TIME_LINE;
                     }
+                    frp_time it = frpParseTime(lyric,cursor,maxlen);
+                    currentValue[i].time = move_right ? it : -it;
                 }else{
                     currentValue[i].type = FRPVALUE_TYPE_TIM;
                     currentValue[i].time = frpParseTime(lyric,cursor,maxlen);
@@ -735,6 +733,34 @@ int flyc_seg_parser(PARSE_SEG_ARGS){
     process_index[process_count++]=i; \
 }}while(0)
 
+    //process the 'FRP_FLYC_RELATION_LINE'
+    SELECT_INDEX_OF_PTYPE(FRP_FLYC_RELATION_LINE);
+
+
+    for(frp_size i = 0;i < process_count;i++){
+        frp_time durlineval = 0,durnodeval = 0;//mem var
+        frp_size index = process_index[i];
+        for(FRPLine * line = flyc->lines;line;line = line->next){
+            //apply for line
+            if(line->values[index].type == FRPVALUE_TYPE_RELATIVE_TIME_NODE)
+                line->values[index].time += durnodeval;
+            else if(line->values[index].type == FRPVALUE_TYPE_RELATIVE_TIME_LINE)
+                line->values[index].time += durlineval;
+            line->values[index].type = FRPVALUE_TYPE_TIM;
+            durlineval = durnodeval = line->values[index].time;
+            //apply for node
+            for(FRPNode * node = line->node;node;node = node->next){
+                if(node->values[index].type == FRPVALUE_TYPE_RELATIVE_TIME_LINE)
+                    node->values[index].time += durlineval;
+                else if (node->values[index].type == FRPVALUE_TYPE_RELATIVE_TIME_NODE)
+                    node->values[index].time += durnodeval;
+                node->values[index].type = FRPVALUE_TYPE_TIM;
+                durnodeval = node->values[index].time;
+            }
+        }
+    }
+
+    //end of process the 'FRP_FLYC_PTYPE_DURATION'
     //process the 'FRP_FLYC_PTYPE_DURATION's 'between'
     SELECT_INDEX_OF_PTYPE(FRP_FLYC_PTYPE_DURATION);
 
@@ -767,7 +793,10 @@ int flyc_seg_parser(PARSE_SEG_ARGS){
             }
         }
     }
-    //end of process the 'FRP_FLYC_PTYPE_DURATION's 'mnext'
+    //end of process the 'FRP_FLYC_PTYPE_DURATION'
+
+
+
 
     return 0;
 
@@ -1112,7 +1141,7 @@ int frp_anim_seg_parser(PARSE_SEG_ARGS){
 #define COL_FUNC        3
 #define COL_DURING      4
 #define COL_OFFSET      5
-//#define COL_PLAYTIME    6
+    //#define COL_PLAYTIME    6
 
 #define COL_USEDCOUNT 6
 
@@ -1148,8 +1177,8 @@ int frp_anim_seg_parser(PARSE_SEG_ARGS){
             colmap[col_count] = COL_DURING;
         }else if(frpstr_rcmp(lyric,lname,ANSI2UTF8("Offset")) == 0){
             colmap[col_count] = COL_OFFSET;
-//        }else if(frpstr_rcmp(lyric,lname,ANSI2UTF8("PlayTime")) == 0){
-//            colmap[col_count] = COL_PLAYTIME;
+            //        }else if(frpstr_rcmp(lyric,lname,ANSI2UTF8("PlayTime")) == 0){
+            //            colmap[col_count] = COL_PLAYTIME;
         }else{
             colmap[col_count] = COL_UNKNOWN;
         }
@@ -1168,11 +1197,11 @@ int frp_anim_seg_parser(PARSE_SEG_ARGS){
     if(!colgot[COL_FUNC])      { frpErrorMessage(lyric,*cursor,maxlen,"Property [Func] is need.");return -1; }
     if(!colgot[COL_DURING])    { frpErrorMessage(lyric,*cursor,maxlen,"Property [During] is need.");return -1; }
     if(!colgot[COL_OFFSET])    { frpErrorMessage(lyric,*cursor,maxlen,"Property [Offset] is need.");return -1; }
-//    if(!colgot[COL_PLAYTIME])  { frpErrorMessage(lyric,*cursor,maxlen,"Property [PlayTime] is need.");return -1; }
+    //    if(!colgot[COL_PLAYTIME])  { frpErrorMessage(lyric,*cursor,maxlen,"Property [PlayTime] is need.");return -1; }
     //memory of last line
     frp_str linetext[COL_MAX];
-//    float lastoffset = 0;
-//    int lastplaytime = 0;
+    //    float lastoffset = 0;
+    //    int lastplaytime = 0;
     for(int i=0;i<COL_MAX;i++)
         linetext[i].len = 0;
 
@@ -1431,30 +1460,30 @@ struct FPTHelper{
 };
 
 void frp_play_init_qsort_subprogram(struct FPTHelper * array,frp_size beg,frp_size end){
-   if(end <= beg + 1)
-       return;
-   frp_size i = beg,j = end;
-   frp_time key = array[beg].beg;
-   for(;;)
-   {
-       while(i < end - 1 && array[++i].beg <= key)
-           ;
-       while(j > beg && array[--j].beg >= key)
-           ;
-       if(i < j){
-           //swap
-           frp_time t = array[i].beg;
-           array[i].beg = array[j].beg;
-           array[j].beg = t;
-       }else{
-           break;
-       }
-   }
-   frp_time t = array[j].beg;
-   array[j].beg = array[beg].beg;
-   array[beg].beg = t;
-   frp_play_init_qsort_subprogram(array,beg,j);
-   frp_play_init_qsort_subprogram(array,j+1,end);
+    if(end <= beg + 1)
+        return;
+    frp_size i = beg,j = end;
+    frp_time key = array[beg].beg;
+    for(;;)
+    {
+        while(i < end - 1 && array[++i].beg <= key)
+            ;
+        while(j > beg && array[--j].beg >= key)
+            ;
+        if(i < j){
+            //swap
+            frp_time t = array[i].beg;
+            array[i].beg = array[j].beg;
+            array[j].beg = t;
+        }else{
+            break;
+        }
+    }
+    frp_time t = array[j].beg;
+    array[j].beg = array[beg].beg;
+    array[beg].beg = t;
+    frp_play_init_qsort_subprogram(array,beg,j);
+    frp_play_init_qsort_subprogram(array,j+1,end);
 }
 ///
 /// \brief frp_play_init_timeline_segfill
@@ -1535,7 +1564,7 @@ void frp_play_init_timeline(FRPFile * file){
         tree[i].end = tree[i*2+1].end;
         tree[i].line = NULL;
     }
-/*
+    /*
     for(int i=0;i<treesize;i++){
         printf("[%d|%lld:%lld]",i,tree[i].beg,tree[i].end);
     }

@@ -18,13 +18,13 @@ line,0,between,Empty,,1,1,1,,0,0,0,0,0,0.5,0.5,0.5,0.5
 
 line,2000,between,
 word,>10,,T1
-,,,KK
+,>>30,,KK
 ,,,YY
 ,,,ZZ
 ,
-line,>10,
+line,>500,
 word,,,T2
-line,
+line,>1000
 word,,,T3
 line,>1000,1000
 word,,,END

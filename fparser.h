@@ -19,6 +19,8 @@ extern char FRP_support_seg_names[][30];
 #define FRPVALUE_TYPE_NUM   3 //实数
 //#define FRPVALUE_TYPE_EXP   4 //表达式
 #define FRPVALUE_TYPE_TIM   5 //时间 frp_time
+#define FRPVALUE_TYPE_RELATIVE_TIME_LINE 6//临时类型，相对于行的偏移
+#define FRPVALUE_TYPE_RELATIVE_TIME_NODE 7//临时类型，相对于Node的偏移
 struct FRLanim;
 typedef struct FRPValue{
     int type;
@@ -201,7 +203,7 @@ extern void frpdestroy(FRPFile * file);
 #define FRP_FLYC_PTYPE_STR      0 //全局默认字符串
 #define FRP_FLYC_PTYPE_TYPE     1 //字符串，但支持持Line和Type两个
 #define FRP_FLYC_PTYPE_DURATION 2 //frp_time格式，支持即时计算mnext单词
-#define FRP_FLYC_RELATION_LINE  3 //相对上一个Line的偏移，主要用于StartTime属性 最终是一个TIM
+#define FRP_FLYC_RELATION_LINE  3 //相对上一个Line的偏移(单箭头> <)或Node的偏移(>> <<)，主要用于StartTime属性 最终是一个TIM
 #define FRP_FLYC_PTYPE_NUM      4 //实数 只有这一个能应用动画
 #define FRP_FLYC_PTYPE_INT      5 //整数
 
