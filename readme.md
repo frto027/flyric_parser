@@ -8,15 +8,17 @@
 一个歌词的样例见lrc.txt。歌词的格式的初步定义见file_format_define.txt
 
 # 项目文件描述
-## 环境依赖
-### 词法分析和语法分析
+## 编译依赖
+### 库依赖
+默认的`fparser_platform.c`实现中使用了`math.h`的`sinf`，因此需要加入`-lm`的编译选项。这是唯一的非默认的第三方库依赖。您可以自行替换这个函数以避免依赖，或直接加入这个编译选项即可。
+### bison和flex
 歌词支持自定义动画，其中曲线解析部分的源代码位于`lex.frp_bison.c` `frp_bison.tab.c` `frp_bison.tab.h`，这些文件需要使用`flex`和`bison`来生成。
 
 编译源代码需要安装flex和bison，请在linux系统下生成这些文件。在`fedora 30`下，使用下面的命令是可行的：
 ```
 yum install -y flex bison
 ```
-执行下面的shell语句，你就能生成需要的`.c`文件了。为了开发方便，这些指令也被放入了`makefile`和qt工程的Debug的`Build steps`里面，执行`make clean`会清除这些文件。
+执行下面的shell语句，你就能生成需要的`.c`文件了。为了开发方便，这些指令也被放入了`makefile`和qt工程的Debug的`Build steps`里面(可能没有启用)，执行`make clean`会清除这些文件。
 ```
 flex --prefix=frp_bison frp_flex.l
 bison -d --name-prefix=frp_bison frp_bison.y
@@ -25,9 +27,9 @@ bison -d --name-prefix=frp_bison frp_bison.y
 `fparser.c/h`仅使用了`fparser_platform.c/h`和`bison`、`flex`生成的文件中的函数，如果希望跨平台，就移植`fparser_platform.c/h`这个文件。
 
 ## QT IDE
-你可以使用`QT Creator`打开.pro文件。
+可以使用`QT Creator`打开.pro文件。可能需要稍微修改后才能运行。
 ## Makefile
-编写了`makefile`，执行下面的指令来生成源代码并编译所有的`.o`目标文件
+编写了`makefile`，执行下面的指令来生成源代码并编译所有的`.o`目标文件并生成`libfrparser.a`静态库。
 ```
 make
 ```
