@@ -5,7 +5,7 @@
 现在已经可以使用了
 
 # 歌词文件格式
-一个歌词的样例见lrc.txt。歌词的详细格式的定义见file_format_define.txt
+一个歌词的样例见lrc.txt。歌词的格式的初步定义见file_format_define.txt
 
 # 项目文件描述
 ## 环境依赖
@@ -48,6 +48,7 @@ make test.normal
 
 # 使用说明
 TODO，参照test.c，文件的打开、关闭操作、对一个文件进行查询操作不支持多线程，对多个文件分别的查询操作可以是多线程的。
+## 一个例子
 ```c
 #include "frparser_public.h"
 //其它内容
@@ -79,6 +80,27 @@ frpdestroy(f);
 //释放全部内存
 frpshutdown();
 ```
+
+## 字符串数据类型
+为方便支持utf-8编码，程序内字符串是用`frp_uint8 *`，即8位无符号类型。
+程序内部除部分`flex`和`bison`解析外全部使用`frp_size`数据类型，其定义如下：
+```c
+typedef struct{
+    unsigned int beg;
+    frp_size len;
+}frp_str;
+```
+`frp_str`表示的是传入`frpopen`的字符串的子串，文件内部无修改地保留或者拷贝这个字符串于结构体`FRPFile`的`textpool`，并当作文字池使用。  
+`beg`表示字符串在文字池的起始位置。`len`表示字符串的字节长度。字符串全部都**不是**以NULL结尾的。  
+另外也提供下面的函数用来做字符串处理：
+```c
+extern int frpstr_cmp(const frp_uint8 * textpool,const frp_str stra,const frp_str strb);
+extern int frpstr_rcmp(const frp_uint8 * textpool,const frp_str stra,const frp_uint8 strb[]);
+extern int frpstr_rrcmp(const frp_uint8 stra[],const frp_uint8 strb[]);
+extern frp_size frpstr_fill(const frp_uint8 * textpool,const frp_str str,frp_uint8 buff[],frp_size size);
+```
+其中`frpstr_fill`将字符串填充到buff和size表示的数组中，并会处理转义符号。
+
 # 已知但没修的BUG
 - 如果解析出现warring，则内存泄漏
 - 如果解析出现Error，则内存泄漏

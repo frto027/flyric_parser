@@ -13,7 +13,8 @@ SOURCES += \
 HEADERS += \
     fparser.h \
     fparser_platform.h \
-    frp_bison.tab.h
+    frp_bison.tab.h \
+    fparser_public.h
 
 DISTFILES += \
     file_format_define.txt \

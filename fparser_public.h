@@ -214,6 +214,8 @@ extern frp_size frp_play_get_property_id(FRPFile* file,const frp_uint8 *property
 //if the line is not showed,the value is can be calculated too.
 //计算浮点属性值，这是包含动画的
 extern float frp_play_property_float_value(frp_time time, FRPValue * values,frp_size property_id);
+//计算字符串的值，主要用于歌词
+extern frp_str frp_play_property_string_value(FRPValue * values,frp_size property_id);
 
 //get lines when playing at 'time'
 extern FRTNode * frp_play_getline_by_time(FRPFile * file,frp_time time);

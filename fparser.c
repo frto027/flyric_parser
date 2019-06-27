@@ -1441,6 +1441,16 @@ float frp_play_property_float_value(frp_time time, FRPValue * values,frp_size pr
     }
     return target->num;
 }
+//计算字符串属性值
+frp_str frp_play_property_string_value(FRPValue * values,frp_size property_id){
+    frp_str empty_str = {0,0};
+    
+    if(values[property_id].type == FRPVALUE_TYPE_STR)
+        return values[property_id].str;
+    else
+        return empty_str;
+}
+
 //这个结构体是线段树的节点，用于辅助构建timeline
 struct FPTHelper{
     frp_time beg;
@@ -1680,6 +1690,8 @@ frp_size frp_play_fill_line_text(FRPFile * file, FRPLine * line,frp_size propert
     }
     return already;
 }
+
+
 //end of frp play
 
 //begin of FRL parser(load lyric and calcupate property)
