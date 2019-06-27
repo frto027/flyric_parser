@@ -57,7 +57,7 @@ void printFlycLine(FRPLine *line){
     if(line == NULL)
         printf("-->empty line\n");
     else{
-        printf("line,beg = %llu,end = %llu\n",line->starttime,line->endtime);
+        printf("line[%d],beg = %llu,end = %llu\n",line->linenumber,line->starttime,line->endtime);
         for(unsigned int i=0;i<line->seg->flyc.value_count;i++){
             printf("|");
             printString(line->seg->flyc.value_names[i]);
@@ -75,7 +75,7 @@ void printFlycLine(FRPLine *line){
 void printFlycSeg(FRPSeg * seg){
     printf("->flyc seg name:");
     printString(seg->segname);
-    printf("\n->print lines:\n");
+    printf("\n->print lines,all[%d]:\n",seg->flyc.linenumber_all);
     printFlycLine(seg->flyc.lines);
 }
 

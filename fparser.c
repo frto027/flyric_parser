@@ -795,9 +795,12 @@ int flyc_seg_parser(PARSE_SEG_ARGS){
     }
     //end of process the 'FRP_FLYC_PTYPE_DURATION'
 
-
-
-
+    //line number
+    frp_size linenumber = 0;
+    for(FRPLine * lin = flyc->lines;lin;lin = lin->next)
+        lin->linenumber = linenumber++;
+    flyc->linenumber_all = linenumber;
+    
     return 0;
 
 ERROR:

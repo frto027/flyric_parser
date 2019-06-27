@@ -41,7 +41,7 @@ typedef struct FRPValue{
         int integer;
         struct{
             float num;
-            struct FRLanim * anim_apply;
+            struct FRLanim * anim_apply;//linked list
         };
         frp_time time;
     };
@@ -50,21 +50,23 @@ typedef struct FRPValue{
 
 // begin of lyric line elements
 typedef struct FRPNode{
-    FRPValue * values;
+    FRPValue * values;//it is an array.
     frp_time starttime,endtime;
     struct FRPNode * next;
 }FRPNode;
 
 struct FRPSeg;
 typedef struct FRPLine{
-    FRPNode * node;
-    FRPValue * values;
+    FRPNode * node;//linked list
+    FRPValue * values;//array
     struct FRPSeg * seg;
     struct FRPLine *next;
     frp_time starttime,endtime;
+    frp_size linenumber;//行号，从0开始连续不重复
 }FRPLine;
 typedef struct FRFlyc{
-    FRPLine * lines;
+    FRPLine * lines;//linked list
+    frp_size linenumber_all;//总行数
     frp_str value_names[FRP_MAX_SEGMENT_PROPERTY_COUNT];
     frp_size value_count;
 }FRFlyc;
@@ -105,7 +107,7 @@ typedef struct FRCExpress{
 
 typedef struct FRCurveLine{
     frp_str curvname;
-    FRCExpress *express;
+    FRCExpress *express;//a pointer
     frp_size argc;
     struct FRCurveLine *next;
     //express should have args count
@@ -122,15 +124,15 @@ typedef struct FRAProp{
         frp_str property_name;//after parse segment
         frp_size property_id;//after parse all file(id of flyc segment property)
     };
-    FRCExpress * func_exp;//argc = 3 (x,t,d)
+    FRCExpress * func_exp;//argc = 3 (x,t,d),see frpAnimFuncArgInit in fparser_platform.c
     FRCExpress * during_exp;//argc = 0
-    FRCExpress * offset_exp;
+    FRCExpress * offset_exp;//argc = 0
     //int play_time;//FRAP_PLAYTIME
     struct FRAProp * next;
 }FRAProp;
 typedef struct FRALine{
     frp_str name;
-    FRAProp * prop;
+    FRAProp * prop;//linked list
     struct FRALine * next;
 }FRALine;
 typedef struct FRAnim{//property is solid
