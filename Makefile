@@ -1,7 +1,7 @@
 libs += -lm
 
-main:fparser.o fparser_platform.o frp_bison.tab.o lex.frp_bison.o
-
+libfrparser.a:fparser.o fparser_platform.o frp_bison.tab.o lex.frp_bison.o
+	ar -r $@ $+
 test.timeline:test.timeline.o fparser.o fparser_platform.o frp_bison.tab.o lex.frp_bison.o
 	cc -o $@ $+ $(libs)
 test.memcheck:test.memcheck.o fparser.o fparser_platform.o frp_bison.tab.o lex.frp_bison.o
@@ -29,4 +29,4 @@ lex.frp_bison.c:frp_flex.l
 	flex --prefix=frp_bison frp_flex.l
 fparser.h:fparser_public.h
 clean:
-	rm -f *.o frp_bison.tab.c frp_bison.tab.h lex.frp_bison.c test.normal test.memcheck test.timeline
+	rm -f *.o frp_bison.tab.c frp_bison.tab.h lex.frp_bison.c test.normal test.memcheck test.timeline libfrparser.a
