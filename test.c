@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include "fparser.h"
+#include "fparser_public.h"
 //this file is for debug only
 #define PERFORMANCE_COUNT_SEC 10
 
@@ -107,7 +107,7 @@ int main(int argc,char **argv)
     //这里要用二进制读入，传入必须是utf-8编码的文件
     fread(buff,sizeof(frp_uint8),4096,f);
 
-    frpinit();
+    frpstartup();
     frp_anim_add_support("ColorR");
     printf("ready to parse.\n");
     FRPFile * file = frpopen(buff,sizeof(buff),1);
@@ -173,7 +173,7 @@ int main(int argc,char **argv)
     fread(buff,sizeof(frp_uint8),4096,f);
     fclose(f);
 
-    frpinit();
+    frpstartup();
     frp_anim_add_support("ColorR");
     printf("ready to parse.\n");
 
@@ -203,7 +203,7 @@ int main(int argc,char **argv)
     fread(buff,sizeof(frp_uint8),4096,f);
     fclose(f);
 
-    frpinit();
+    frpstartup();
     frp_anim_add_support("ColorR");
     printf("ready to parse.\n");
 

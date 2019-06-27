@@ -1280,22 +1280,6 @@ int frp_anim_seg_parser(PARSE_SEG_ARGS){
                     goto skip_line;
                 }
                 break;
-                /*
-            case COL_PLAYTIME:
-                if(!EXTEND_LASTLINE){
-                    frp_str s = frpParseString(lyric,cursor,maxlen,",\r\n");
-                    if(frpstr_rcmp(lyric,s,ANSI2UTF8("Start")) == 0){
-                        lastplaytime = FRAP_PLAYTIME_START;
-                    }else if(frpstr_rcmp(lyric,s,ANSI2UTF8("End"))==0){
-                        lastplaytime = FRAP_PLAYTIME_END;
-                    }else{
-                        frpWarringMessage(lyric,*cursor,maxlen,"Playtime only support [Start] and [End].Skip line.");
-                        goto skip_line;
-                    }
-                }
-                prop->play_time = lastplaytime;
-                break;
-                */
             default:
                 if(!EXTEND_LASTLINE)
                     frpParseClosedString(lyric,cursor,maxlen,",\r\n","\r\n");
@@ -1443,10 +1427,12 @@ float frp_play_property_float_value(frp_time time, FRPValue * values,frp_size pr
         return 0;
     for(FRLanim * anim = target->anim_apply;anim;anim = anim->next){
         if(anim->starttime <= time && anim->endtime >time){
-            //frpAnimFuncArgCalc(arg);
+            //setup argument 'x','t','d'
             arg[1] = time - anim->starttime;
             arg[2] = anim->endtime - anim->starttime;
             arg[0] = arg[1] / arg[2];
+            //setup other arguments
+            frpAnimFuncArgCalc(arg);
             return frp_curve_expresult_calculate(anim->animprop->func_exp,arg,values);
         }
     }
@@ -1814,7 +1800,7 @@ void frp_init_anim_and_times(FRFlyc * flyc,FRAnim * anim,const frp_uint8 * textp
 
     }
 }
-void frpinit(){
+void frpstartup(){
     const char * DefaultFloatProperty[] = {
         "ColorR","ColorG","ColorB","TransX","TransY","ScaleX","ScaleY",
         "AnchorX","AnchorY","SelfAnchorX","SelfAnchorY"

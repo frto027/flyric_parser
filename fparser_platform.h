@@ -9,6 +9,7 @@
 //file format without BOM is adviced, but txt from windows notepad has a bad head.
 #define FRP_AUTO_CHECK_BOM 1
 
+typedef char frp_bool;
 typedef unsigned int frp_size;
 typedef unsigned char frp_uint8;
 typedef signed long long frp_time;
