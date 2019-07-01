@@ -1,32 +1,37 @@
-libs += -lm
 
-libfrparser.a:fparser.o fparser_platform.o frp_bison.tab.o lex.frp_bison.o
-	ar -r $@ $+
-test.timeline:test.timeline.o fparser.o fparser_platform.o frp_bison.tab.o lex.frp_bison.o
-	cc -o $@ $+ $(libs)
-test.memcheck:test.memcheck.o fparser.o fparser_platform.o frp_bison.tab.o lex.frp_bison.o
-	cc -o $@ $+ $(libs)
-test.normal:test.normal.o fparser.o fparser_platform.o frp_bison.tab.o lex.frp_bison.o
-	cc -o $@ $+ $(libs)
-test.timeline.o:test.c fparser.h fparser_public.h
-	cc -o $@ -c test.c -DTIMELINE_TEST
-test.memcheck.o:test.c fparser.h fparser_public.h
-	cc -o $@ -c test.c -DMEMORY_LEAK_TEST
-test.normal.o:test.c fparser.h fparser_public.h
-	cc -o $@ -c test.c -DNORMAL_TEST
+CC=cc
+PROJECT_DIR=.
+OBJ_DIR=$(PROJECT_DIR)/obj
+SRC_DIR=$(PROJECT_DIR)/src
+INCLUDE_DIR=$(PROJECT_DIR)/include
+BIN_DIR=$(PROJECT_DIR)/bin
 
-fparser.o:fparser.c fparser.h fparser_platform.h fparser_public.h
-	cc -c fparser.c
-fparser_platform.o:fparser_platform.c fparser.h fparser_platform.h fparser_public.h
-	cc -c fparser_platform.c
-frp_bison.tab.o:frp_bison.tab.c fparser.h fparser_platform.h fparser_public.h
-	cc -c frp_bison.tab.c
-lex.frp_bison.o:lex.frp_bison.c fparser.h frp_bison.tab.h
-	cc -c lex.frp_bison.c
-frp_bison.tab.c frp_bison.tab.h:frp_bison.y
-	bison -d --name-prefix=frp_bison frp_bison.y
-lex.frp_bison.c:frp_flex.l
-	flex --prefix=frp_bison frp_flex.l
-fparser.h:fparser_public.h
+# compile options for test
+libs+= -lm -L$(OBJ_DIR) -lfparser
+incl+= -I$(INCLUDE_DIR)
+
+all:
+	[ -d $(INCLUDE_DIR) ] || mkdir $(INCLUDE_DIR)
+	[ -d $(OBJ_DIR) ] || mkdir $(OBJ_DIR)
+	cd $(SRC_DIR)&&make
+test:$(BIN_DIR)/test.timeline $(BIN_DIR)/test.memcheck $(BIN_DIR)/test.normal
+	
+
+$(BIN_DIR)/test.timeline:test.c all
+	[ -d $(BIN_DIR) ]||mkdir $(BIN_DIR)
+	$(CC) -o $@ test.c -DTIMELINE_TEST $(libs) $(incl)
+$(BIN_DIR)/test.memcheck:test.c all
+	[ -d $(BIN_DIR) ]||mkdir $(BIN_DIR)
+	$(CC) -o $@ test.c -DMEMORY_LEAK_TEST $(libs) $(incl)
+$(BIN_DIR)/test.normal:test.c all
+	[ -d $(BIN_DIR) ]||mkdir $(BIN_DIR)
+	$(CC) -o $@ test.c -DNORMAL_TEST $(libs) $(incl)
+
+cleanall:clean
+	cd $(SRC_DIR)&&make clean
+
 clean:
-	rm -f *.o frp_bison.tab.c frp_bison.tab.h lex.frp_bison.c test.normal test.memcheck test.timeline libfrparser.a
+	rm -rf ./obj/* ./include/* ./bin/*
+#	rm -r $(OBJ_DIR)/* $(INCLUDE_DIR)/* $(BIN_DIR)/*
+
+

@@ -7,12 +7,12 @@ C语言的解析器将被实现，支持手动实现的utf-8编码，同时希�
 RoadMap
 第一版flyc歌词定义
 C语言解析库的编写
-|->属性扫描器
-|->曲线函数计算器
-|->歌词播放自动机
-|->渲染接口
-C语言的布局计算器实现
-C语言OpenGL渲染器实现
+|->属性扫描器over
+|->曲线函数计算器over
+|->歌词播放自动机over
+|->渲染接口over
+C语言的布局计算器实现--
+C语言OpenGL渲染器实现--
 UWP渲染控件
 Foobar渲染控件
 LRC歌词转换到flyc歌词程序
@@ -79,6 +79,7 @@ ShiftAnim,SelfAnchorX,1-x,10,0
 ShakeAnim,Rotate,Shake(x),x,0
 ,TransX
 ,TransY
+(BUG:开头不能省略)
 
 由于有属性引用语法[Property]的存在会和段的定义冲突，不建议把During、Func、Offset三列放在开头。
 

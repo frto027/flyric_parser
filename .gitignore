@@ -73,3 +73,8 @@ Thumbs.db
 
 # Vscode
 .vscode/*
+
+# builds
+
+bin/*
+obj/*

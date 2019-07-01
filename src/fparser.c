@@ -1817,7 +1817,7 @@ void frp_init_anim_and_times(FRFlyc * flyc,FRAnim * anim,const frp_uint8 * textp
 }
 void frpstartup(){
     const char * DefaultFloatProperty[] = {
-        "ColorR","ColorG","ColorB","TransX","TransY","ScaleX","ScaleY",
+        "ColorR","ColorG","ColorB","ColorA","TransX","TransY","ScaleX","ScaleY",
         "AnchorX","AnchorY","SelfAnchorX","SelfAnchorY"
     };
 

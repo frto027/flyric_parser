@@ -11,44 +11,51 @@
 ## 编译依赖
 ### 库依赖
 默认的`fparser_platform.c`实现中使用了`math.h`的`sinf`，因此需要加入`-lm`的编译选项。这是唯一的非默认的第三方库依赖。您可以自行替换这个函数以避免依赖，或直接加入这个编译选项即可。
-### bison和flex
+### bison和flex(可选)
 歌词支持自定义动画，其中曲线解析部分的源代码位于`lex.frp_bison.c` `frp_bison.tab.c` `frp_bison.tab.h`，这些文件需要使用`flex`和`bison`来生成。
 
-编译源代码需要安装flex和bison，请在linux系统下生成这些文件。在`fedora 30`下，使用下面的命令是可行的：
+如果不修改这几个文件，那么无需安装flex和bison，所需的这些源代码已经上传到git。
+
+完全编译源代码需要安装flex和bison，请在linux系统下生成这些文件。在`fedora 30`下，使用下面的命令是可行的：
 ```
 yum install -y flex bison
 ```
-执行下面的shell语句，你就能生成需要的`.c`文件了。为了开发方便，这些指令也被放入了`makefile`和qt工程的Debug的`Build steps`里面(可能没有启用)，执行`make clean`会清除这些文件。
-```
-flex --prefix=frp_bison frp_flex.l
-bison -d --name-prefix=frp_bison frp_bison.y
-```
+
 ### 跨平台移植
 `fparser.c/h`仅使用了`fparser_platform.c/h`和`bison`、`flex`生成的文件中的函数，如果希望跨平台，就移植`fparser_platform.c/h`这个文件。
 
-## QT IDE
-可以使用`QT Creator`打开.pro文件。可能需要稍微修改后才能运行。
 ## Makefile
-编写了`makefile`，执行下面的指令来生成源代码并编译所有的`.o`目标文件并生成`libfrparser.a`静态库。
+编写了`makefile`，执行下面的指令来生成源代码并编译所有的`.o`目标文件并生成`libfparser.a`静态库(在obj目录)。
 ```
 make
 ```
 程序中有一个`test.c`是拿来测试的，执行下面的指令可以生成测试程序
 ```
-make test.timeline
+make test
+```
+或者分别执行
+```
+make bin/test.timeline
 ```
 ```
-make test.memcheck
+make bin/test.memcheck
 ```
 ```
-make test.normal
+make bin/test.normal
 ```
 执行下面的指令来进行内存泄漏的测试检查
 ```
 ./memcheck.sh
 ```
-
+除了`make clean`能清除obj文件和其他文件之外，还可以执行`make cleanall`将bison和flex生成的c文件和h文件一并清除，但下次make需要安装bison和flex才能编译了
 # 使用说明
+## 链接库的使用
+直接执行`make`生成的库文件位于obj目录下，另外需要将include目录下的头文件添加到include路径  
+假设在这个git的根目录下面构建，不妨使用如下编译选项
+```
+-I./include -L./obj -lfparser -lm
+```
+## API
 TODO，参照test.c，文件的打开、关闭操作、对一个文件进行查询操作不支持多线程，对多个文件分别的查询操作可以是多线程的。
 ## 一个例子
 ```c
@@ -104,26 +111,27 @@ extern frp_size frpstr_fill(const frp_uint8 * textpool,const frp_str str,frp_uin
 其中`frpstr_fill`将字符串填充到buff和size表示的数组中，并会处理转义符号。
 
 # 已知但没修的BUG
-- 如果解析出现warring，则内存泄漏
-- 如果解析出现Error，则内存泄漏
+- 如果解析出现warring，则可能内存泄漏
+- 如果解析出现Error，则可能内存泄漏
+- 动画定义时名称不能省略
+
 # 其他
 下面是一些文件的作用
 
-想要编译这个库，需要这些文件：
 
 文件名|作用
 ------|------
-fparser.c/h|主要文件，所有的程序都在这里
-fparser_platform.c/h|平台相关的东西，做移植时使用
-lex.frp_bison.c|flex词法分析器生成的词法分析文件
-frp_bison.tab.c/h|bison语法分析器生成的语法文件，用于解析表达式
-fparser_public.h|对外接口，文件里面包含这个就可以了
+src/fparser.c/h|主要文件，所有的程序都在这里
+src/fparser_platform.c/h|平台相关的东西，做移植时使用
+src/lex.frp_bison.c|flex词法分析器生成的词法分析文件
+src/frp_bison.tab.c/h|bison语法分析器生成的语法文件，用于解析表达式
+src/fparser_public.h|对外接口，文件里面包含这个就可以了
 
 此外还有一些文件是用于词法分析器的
 
 文件名|作用
 ---|---
-frp_flex.l|flex词法描述
-frp_bison.y|bison语法描述
+srf/bison_flex/frp_flex.l|flex词法描述
+src/bison_flex/frp_bison.y|bison语法描述
 
 一个`test.c`用于测试
