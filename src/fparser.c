@@ -75,7 +75,7 @@ void frp_utf8_fix(frp_uint8 buff[],frp_size i){
         buff[j] = '\0';
     }else{
         frp_size k = 0;
-        while((buff[j]<<k & 0x80))
+        while(buff[j]&(0x80 >> k))
             k++;
         if(k == 0)
             k++;
@@ -140,31 +140,26 @@ int frpstr_cmp(const frp_uint8 * textpool,const frp_str stra,const frp_str strb)
 }
 
 frp_size frpstr_fill(const frp_uint8 * textpool,const frp_str str,frp_uint8 buff[],frp_size size){
-    frp_size mx = MIN(str.len,size);
-    const frp_uint8 * strbeg = textpool + str.beg;
-    frp_size i = 0;
+    frp_size i,j;
     int covert = 0;
-    while(i < mx){
-        if(*strbeg == '\\'){
-            covert = 1;
-        }else{
-            if(covert){
-                switch (*strbeg) {
-                case 'n':
-                    buff[i++] = '\n';
-                    break;
-                case ',':
-                case '\\':
-                default:
-                    buff[i++] = *strbeg;
-                    break;
-                }
+
+    for(i=0,j=0;i<size - 1 && j < str.len;j++){
+        if(covert){
+            if(textpool[str.beg + j] == 'n'){
+                buff[i++] = '\n';
+                covert = 0;
             }else{
-                buff[i++] = *strbeg;
+                buff[i++] = textpool[str.beg + j];
+                covert = 0;
             }
+        }else{
+            if(textpool[str.beg + j] == '\\')
+                covert = 1;
+            else
+                buff[i++] = textpool[str.beg + j];
         }
-        strbeg++;
     }
+    buff[i] = 0;
     frp_utf8_fix(buff,i);
     while(i > 0 && buff[i])
         i--;//find the close mark
@@ -286,9 +281,8 @@ void frpParseSpace(CURSOR_ARGS){
         (*cursor)++;
 }
 void frpParseSkipEscape(CURSOR_ARGS){
-    if(*cursor < maxlen && lyric[*cursor]=='\\'){
+    if(*cursor < maxlen)
         (*cursor)++;
-    }
     if(*cursor < maxlen)
         (*cursor)++;
 }
@@ -296,10 +290,13 @@ frp_str frpParseString(CURSOR_ARGS,const char stops[]){
     frp_str s;
     s.beg = *cursor;
 
+    int covert = 0;
+
     while(*cursor < maxlen && !frp_in_str(lyric[*cursor],stops)){
         if(lyric[*cursor] == '\\')
             frpParseSkipEscape(CURSOR_ARGS_CALL);
-        (*cursor)++;
+        else
+            (*cursor)++;
     }
 
     s.len = *cursor - s.beg;
@@ -313,11 +310,14 @@ frp_str frpParseClosedString(CURSOR_ARGS,const char stops[],const char hardstops
     while(*cursor < maxlen && !frp_in_str(lyric[*cursor],hardstops) &&(level > 0 || !frp_in_str(lyric[*cursor],stops))){
         if(lyric[*cursor] == '\\')
             frpParseSkipEscape(CURSOR_ARGS_CALL);
-        if(lyric[*cursor] == '(')
-            level++;
-        if(lyric[*cursor] == ')')
-            level--;
-        (*cursor)++;
+        else
+        {
+            if(lyric[*cursor] == '(')
+                level++;
+            else if(lyric[*cursor] == ')')
+                level--;
+            (*cursor)++;
+        }
     }
 
     s.len = *cursor - s.beg;

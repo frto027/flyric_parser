@@ -19,7 +19,7 @@ line,0,between,Empty,,1,1,1,,0,0,0,0,0,0.5,0.5,0.5,0.5
 
 line,2000,between,,Shake,
 word,>10,,T1,Shake|Smok
-,>>30,,KK, ,
+,>>30,,KK\,\,abcddd\\\,, ,
 ,,,YY
 ,,,ZZ
 ,
