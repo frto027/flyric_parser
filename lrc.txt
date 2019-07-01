@@ -10,7 +10,7 @@ Name,Property,Func,During,Offset,Hard
 Shake,ColorG,SuperShake(x),[Duration],[Duration]/2,T
 Shake,ColorB,SuperShake(x),123,0,T
 Shake,ColorG,
-,ColorR
+Smok,ColorG
 
 
 [flyc]
@@ -18,7 +18,7 @@ Type,StartTime,Duration,Text,Anim,ColorR,ColorG,ColorB,Style,TransX,TransY,Rotat
 line,0,between,Empty,,1,1,1,,0,0,0,0,0,0.5,0.5,0.5,0.5
 
 line,2000,between,,Shake,
-word,>10,,T1,Shake
+word,>10,,T1,Shake|Smok
 ,>>30,,KK, ,
 ,,,YY
 ,,,ZZ

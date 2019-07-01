@@ -1779,10 +1779,16 @@ void frp_init_anim_and_times(FRFlyc * flyc,FRAnim * anim,const frp_uint8 * textp
                         }//if frpstr_cmp
                     }//for
                     //ready for next search
-                    anim_name_str.beg += tobefind.len;
-                    anim_name_str.len -= tobefind.len;
-                    tobefind.beg += tobefind.len;
+                    anim_name_str.beg += tobefind.len ;
+                    anim_name_str.len -= tobefind.len ;
+                    tobefind.beg += tobefind.len ;
                     tobefind.len = 0;
+                    if(anim_name_str.len > 0 && textpool[tobefind.beg] == '|'){
+                        anim_name_str.beg++;
+                        anim_name_str.len--;
+                        tobefind.beg++;
+                    }
+
                 }
 
                 for(FRPNode * node = line->node;node;node = node->next){
@@ -1826,10 +1832,15 @@ void frp_init_anim_and_times(FRFlyc * flyc,FRAnim * anim,const frp_uint8 * textp
                                 }
                             }
                         //ready for next search
-                        anim_name_str.beg += tobefind.len;
-                        anim_name_str.len -= tobefind.len;
-                        tobefind.beg += tobefind.len;
+                        anim_name_str.beg += tobefind.len ;
+                        anim_name_str.len -= tobefind.len ;
+                        tobefind.beg += tobefind.len ;
                         tobefind.len = 0;
+                        if(anim_name_str.len > 0 && textpool[tobefind.beg] == '|'){
+                            anim_name_str.beg++;
+                            anim_name_str.len--;
+                            tobefind.beg++;
+                        }
                     }
                 }
             }
