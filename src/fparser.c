@@ -1144,9 +1144,10 @@ int frp_anim_seg_parser(PARSE_SEG_ARGS){
 #define COL_FUNC        3
 #define COL_DURING      4
 #define COL_OFFSET      5
+#define COL_HARD        6
     //#define COL_PLAYTIME    6
 
-#define COL_USEDCOUNT 6
+#define COL_USEDCOUNT 7
 
 #define COL_MAX 40
     frp_bool colgot[COL_USEDCOUNT];
@@ -1182,6 +1183,8 @@ int frp_anim_seg_parser(PARSE_SEG_ARGS){
             colmap[col_count] = COL_OFFSET;
             //        }else if(frpstr_rcmp(lyric,lname,ANSI2UTF8("PlayTime")) == 0){
             //            colmap[col_count] = COL_PLAYTIME;
+        }else if(frpstr_rcmp(lyric,lname,ANSI2UTF8("Hard")) == 0){
+            colmap[col_count] = COL_HARD;
         }else{
             colmap[col_count] = COL_UNKNOWN;
         }
@@ -1200,6 +1203,8 @@ int frp_anim_seg_parser(PARSE_SEG_ARGS){
     if(!colgot[COL_FUNC])      { frpErrorMessage(lyric,*cursor,maxlen,"Property [Func] is need.");return -1; }
     if(!colgot[COL_DURING])    { frpErrorMessage(lyric,*cursor,maxlen,"Property [During] is need.");return -1; }
     if(!colgot[COL_OFFSET])    { frpErrorMessage(lyric,*cursor,maxlen,"Property [Offset] is need.");return -1; }
+    //hard is not required
+
     //    if(!colgot[COL_PLAYTIME])  { frpErrorMessage(lyric,*cursor,maxlen,"Property [PlayTime] is need.");return -1; }
     //memory of last line
     frp_str linetext[COL_MAX];
@@ -1212,17 +1217,22 @@ int frp_anim_seg_parser(PARSE_SEG_ARGS){
     frp_flex_textpool = lyric;
     frp_str col_func_str = {0,0},col_during_str = {0,0},col_offset_str = {0,0};
 
+
     while(NOT_END){
         frpParseComment(lyric,cursor,maxlen);
         if(!NOT_END || FRP_READ == '[')
             break;
-#define EXTEND_LASTLINE (!NOT_END || frp_in_str(FRP_READ,"\r\n"))
+#define EXTEND_LASTLINE (!NOT_END || frp_in_str(FRP_READ,",\r\n"))
         //read a line
         frp_str newname = {0,0};
         FRAProp *prop = frpmalloc(sizeof(FRAProp));
 
+        //default value
+        prop->is_hard = 0;
+
         frp_bison_arg_source = FRP_BISON_ARG_SOURCE_RAWSTR;
         frp_bison_task = FRP_BISON_TASK_CHECK;
+
 
         for(frp_size col = 0;col < col_count;col++){
             switch (colmap[col])
@@ -1282,6 +1292,17 @@ int frp_anim_seg_parser(PARSE_SEG_ARGS){
                     frpWarringMessage(lyric,*cursor,maxlen,frp_bison_errormsg);
                     goto skip_line;
                 }
+                break;
+            case COL_HARD:
+                if(!EXTEND_LASTLINE){
+                    frp_str str = frpParseString(lyric,cursor,maxlen,",\r\n");
+                    if(str.len == 1 && frp_in_str(lyric[str.beg],"TFtf")){
+                        linetext[col] = str;
+                    }else{
+                        frpWarringMessage(lyric,*cursor,maxlen,"Hard only support \"T\" \"t\" or \"F\" \"f\" command");
+                    }
+                }
+                prop->is_hard = linetext[col].len == 1 && frp_in_str(lyric[linetext[col].beg],"Tt");
                 break;
             default:
                 if(!EXTEND_LASTLINE)
@@ -1748,9 +1769,9 @@ void frp_init_anim_and_times(FRFlyc * flyc,FRAnim * anim,const frp_uint8 * textp
                                         //start time and end time
                                         created_anim->starttime = line->values[start_time_prop_id].time + (int)frp_curve_expresult_calculate(created_anim->animprop->offset_exp,NULL,line->values);
                                         created_anim->endtime = created_anim->starttime + (int)frp_curve_expresult_calculate(created_anim->animprop->during_exp,NULL,line->values);
-                                        if(created_anim->starttime < line->starttime)
+                                        if(prop->is_hard && created_anim->starttime < line->starttime)
                                             line->starttime = created_anim->starttime;
-                                        if(created_anim->endtime > line->endtime)
+                                        if(prop->is_hard && created_anim->endtime > line->endtime)
                                             line->endtime = created_anim->endtime;
                                     }
                                 }//for
@@ -1795,9 +1816,10 @@ void frp_init_anim_and_times(FRFlyc * flyc,FRAnim * anim,const frp_uint8 * textp
                                             //init starttime and endtime
                                             created_anim->starttime = node->values[start_time_prop_id].time + (int)frp_curve_expresult_calculate(created_anim->animprop->offset_exp,NULL,line->values);
                                             created_anim->endtime = created_anim->starttime + (int)frp_curve_expresult_calculate(created_anim->animprop->during_exp,NULL,line->values);
-                                            if(created_anim->starttime < line->starttime)
+                                            
+                                            if(prop->is_hard && created_anim->starttime < line->starttime)
                                                 line->starttime = created_anim->starttime;
-                                            if(created_anim->endtime > line->endtime)
+                                            if(prop->is_hard && created_anim->endtime > line->endtime)
                                                 line->endtime = created_anim->endtime;
                                         }
                                     }

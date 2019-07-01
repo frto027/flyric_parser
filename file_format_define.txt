@@ -79,7 +79,11 @@ ShiftAnim,SelfAnchorX,1-x,10,0
 ShakeAnim,Rotate,Shake(x),x,0
 ,TransX
 ,TransY
-(BUG:开头不能省略)
+
+此外，还有一个Hard属性，决定当前动画是否能够影响所在行的播放时间。
+Hard可以是T或F，表示真(true)或假(false)
+当Hard为T时，如果当前动画的开始时间比所在行的开始时间早(offset为负)，或者结束时间比所在行要晚(Duration + offset大于行的duration)则歌词行的出现时间会被扩大，这个扩大不影响其他行的播放。
+当Hard为F时，如果出现上述现象，则不会改变行的播放时间，有可能当行出现时动画已经播放了一部分，或者行消失时动画没有播放完毕的现象。这可以用来覆盖某一属性的默认值。
 
 由于有属性引用语法[Property]的存在会和段的定义冲突，不建议把During、Func、Offset三列放在开头。
 

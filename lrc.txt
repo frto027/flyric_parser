@@ -6,25 +6,26 @@ SuperShake(x):SuperShake(x,2)
 
 
 [anim]
-Name,Property,Func,During,Offset
-Shake,ColorG,SuperShake(x),123,0
-Shake,ColorB,SuperShake(x),123,0
+Name,Property,Func,During,Offset,Hard
+Shake,ColorG,SuperShake(x),[Duration],[Duration]/2,T
+Shake,ColorB,SuperShake(x),123,0,T
 Shake,ColorG,
+,ColorR
 
 
 [flyc]
 Type,StartTime,Duration,Text,Anim,ColorR,ColorG,ColorB,Style,TransX,TransY,Rotate,ScaleX,ScaleY,AnchorX,AnchorY,SelfAnchorX,SelfAnchorY
 line,0,between,Empty,,1,1,1,,0,0,0,0,0,0.5,0.5,0.5,0.5
 
-line,2000,between,
-word,>10,,T1
-,>>30,,KK
+line,2000,between,,Shake,
+word,>10,,T1,Shake
+,>>30,,KK, ,
 ,,,YY
 ,,,ZZ
 ,
-line,>500,
+line,3000,
 word,,,T2
-line,>1000
+line,4000
 word,,,T3
 line,>1000,1000
 word,,,END

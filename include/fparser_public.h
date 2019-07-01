@@ -127,6 +127,7 @@ typedef struct FRAProp{
     FRCExpress * func_exp;//argc = 3 (x,t,d),see frpAnimFuncArgInit in fparser_platform.c
     FRCExpress * during_exp;//argc = 0
     FRCExpress * offset_exp;//argc = 0
+    frp_bool is_hard;
     //int play_time;//FRAP_PLAYTIME
     struct FRAProp * next;
 }FRAProp;

@@ -113,7 +113,6 @@ extern frp_size frpstr_fill(const frp_uint8 * textpool,const frp_str str,frp_uin
 # 已知但没修的BUG
 - 如果解析出现warring，则可能内存泄漏
 - 如果解析出现Error，则可能内存泄漏
-- 动画定义时名称不能省略
 
 # 其他
 下面是一些文件的作用
