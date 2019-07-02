@@ -1820,8 +1820,8 @@ void frp_init_anim_and_times(FRFlyc * flyc,FRAnim * anim,const frp_uint8 * textp
                                             created_anim->next = val->anim_apply;
                                             val->anim_apply = created_anim;
                                             //init starttime and endtime
-                                            created_anim->starttime = node->values[start_time_prop_id].time + (int)frp_curve_expresult_calculate(created_anim->animprop->offset_exp,NULL,line->values);
-                                            created_anim->endtime = created_anim->starttime + (int)frp_curve_expresult_calculate(created_anim->animprop->during_exp,NULL,line->values);
+                                            created_anim->starttime = node->values[start_time_prop_id].time + (int)frp_curve_expresult_calculate(created_anim->animprop->offset_exp,NULL,node->values);
+                                            created_anim->endtime = created_anim->starttime + (int)frp_curve_expresult_calculate(created_anim->animprop->during_exp,NULL,node->values);
                                             
                                             if(prop->is_hard && created_anim->starttime < line->starttime)
                                                 line->starttime = created_anim->starttime;
