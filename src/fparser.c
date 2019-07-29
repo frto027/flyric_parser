@@ -573,7 +573,7 @@ int flyc_seg_parser(PARSE_SEG_ARGS){
             switch (FRP_READ) {
             case ',':
                 FRP_MOVE_NEXT();
-                __attribute__((fallthrough));
+                //__attribute__((fallthrough));
             case '\r':
             case '\n':
                 //extends
@@ -800,6 +800,16 @@ int flyc_seg_parser(PARSE_SEG_ARGS){
     for(FRPLine * lin = flyc->lines;lin;lin = lin->next)
         lin->linenumber = linenumber++;
     flyc->linenumber_all = linenumber;
+    
+    {//start time and end time
+        frp_size start_time_prop_id = frp_flyc_get_prop_index_rstr(lyric,flyc,ANSI2UTF8("StartTime"));
+        frp_size during_time_prop_id = frp_flyc_get_prop_index_rstr(lyric,flyc,ANSI2UTF8("Duration"));
+
+        for(FRPLine * line = flyc->lines;line;line = line->next){
+            line->starttime = line->values[start_time_prop_id].time;
+            line->endtime = line->starttime + line->values[during_time_prop_id].time;
+        }
+    }
     
     return 0;
 
@@ -1723,11 +1733,6 @@ void frp_init_anim_and_times(FRFlyc * flyc,FRAnim * anim,const frp_uint8 * textp
     frp_size during_time_prop_id = frp_flyc_get_prop_index_rstr(textpool,flyc,ANSI2UTF8("Duration"));
     frp_size anim_pid = frp_flyc_get_prop_index_rstr(textpool,flyc,ANSI2UTF8("Anim"));
     //ALDO init start time and end time of line
-
-    for(FRPLine * line = flyc->lines;line;line = line->next){
-        line->starttime = line->values[start_time_prop_id].time;
-        line->endtime = line->starttime + line->values[during_time_prop_id].time;
-    }
 
 
     if(anim_pid != FRP_MAX_SEGMENT_PROPERTY_COUNT){
