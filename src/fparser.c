@@ -1476,6 +1476,8 @@ float frp_play_property_float_value(frp_time time, FRPValue * values,frp_size pr
 frp_str frp_play_property_string_value(FRPValue * values,frp_size property_id){
     frp_str empty_str = {0,0};
     
+    if(property_id == FRP_MAX_SEGMENT_PROPERTY_COUNT)
+        return empty_str;
     if(values[property_id].type == FRPVALUE_TYPE_STR)
         return values[property_id].str;
     else
