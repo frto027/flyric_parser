@@ -495,9 +495,11 @@ void frp_flyc_free_values(FRPValue * value){
 }
 
 void flyc_release_lines(FRPSeg * seg){
-    for(FRPLine * lin = seg->flyc.lines,*next = lin->next;lin;lin = next, next = lin->next){
+    for(FRPLine * lin = seg->flyc.lines,*next;lin;lin = next){
+        next = lin->next;
         frp_flyc_free_values(lin->values);
-        for(FRPNode * node = lin->node,*next = node->next;node;node = next,next = node->next){
+        for(FRPNode * node = lin->node,*next;node;node = next){
+            next = node->next;
             if(node->values)
                 frp_flyc_free_values(node->values);
             frpfree(node);
